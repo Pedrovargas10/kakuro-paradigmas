@@ -250,6 +250,15 @@ gerar, verificar, resolver, dica e conclusão. Neste ambiente (Python 3.12.3,
 SWI-Prolog 10.0.2 e uv 0.8.14), a geração levou em média 1,985 s e no máximo
 6,166 s. É uma amostra local, não uma garantia de desempenho em outras máquinas.
 
+Na preparação de Caio para a Fase 3 (PR #42), `make test` passou 83 testes
+Python e 21 testes Prolog; a duplicação da execução plunit permanece na #13.
+O verificador ampliado testa entradas incompatíveis, 422 com mensagem legível,
+preservação das entradas parciais e nova resolução válida após rejeições.
+Dez partidas passaram com geração média de 1,861 s e máxima de 8,659 s, usando
+Python 3.12.3, SWI-Prolog 9.2.9, uv 0.13.9 e Janus 1.5.3. Essa medição é
+separada da amostra anterior de Pedro. A conferência em máquina limpa e no
+navegador continua pendente.
+
 ## 9. Limitações e problemas conhecidos
 
 <!--
@@ -275,8 +284,8 @@ teclado, aparência ou recuperação de falhas no navegador; esses casos estão 
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. Esta implementação foi produzida com assistência de IA e revisão técnica independente, conforme seção 11; a revisão humana permanece necessária antes de integrar os PRs. |
-| [Nome]     | [...] |
+| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
+| Caio (@CaioSoandrd) | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile (#30), revisão assistida dos PRs Python de Pedro e preparação da integração HTTP (#42). Evidências: commits c20c40b, b07cd4d e ef47daf. |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
@@ -307,7 +316,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** [nenhum | pontual | auxiliar | intensivo]
+- **Faixa de uso no código:** [auxiliar]
   <!--
     nenhum: não usou. pontual: autocompletar, dúvidas, explicar erros.
     auxiliar: trechos gerados pela IA e revisados pelo grupo. intensivo: a
@@ -317,8 +326,8 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
-| Codex (OpenAI) e agente revisor Antigravity no Orca | Geração de código, testes e documentação da parte Python de Pedro; revisão técnica independente antes de publicar cada PR | Execução de pytest, Janus/Prolog reais e servidor HTTP; pareceres por commit do agente revisor. Aprovação humana e merge não foram executados pelos agentes nesta entrega. |
-| [Nome ou "nenhuma"] | [...] | [...] |
+| Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
+| Codex (OpenAI) | Revisão dos PRs #35–#40, configuração do ambiente, ampliação do verificador HTTP e documentação de integração/entrega | 83 testes Python com Janus real, 21 testes Prolog e dez partidas HTTP; reviews publicadas com autorização de Caio e identificação da assistência. O fluxo Elm permanece pendente. |
 
 ## 12. Apresentação oral
 
