@@ -212,3 +212,17 @@ O verificador HTTP agora cobre também erros de entrada e nova tentativa válida
 - `make dev-backend`: o monitor nativo encontrou o limite de arquivos abertos
   desta máquina; usar `WATCHFILES_FORCE_POLLING=true make dev-backend`.
 - O frontend não foi alterado. #28/#29 permanecem pendentes de validação visual.
+
+## 6. Preparação Python da Fase 4
+
+Branch `docs/python-fase4-entrega`, baseada na integração #42 e atualizada com
+`main` após os merges #35–#40. A preparação inclui README, arquivos ignorados,
+contribuições de Caio e checklist em `docs/ENTREGA_PYTHON.md`.
+
+`make validar` agora rejeita o arquivo oficial ausente/vazio para evitar falso
+sucesso. O script do professor permanece pendente na #9. Foram conferidos o
+caminho de rejeição e a execução de um script não vazio em diretório temporário;
+isso valida o alvo Makefile, não os documentos de entrega.
+
+A Fase 3 coletiva continua aberta: preparar documentação não substitui #28/#29
+nem autoriza marcar congelamento ou entrega como concluídos.
