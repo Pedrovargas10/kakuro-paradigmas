@@ -7,8 +7,10 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .prolog import PrologInputError, ensure_prolog_loaded, get_hint, solve_puzzle
+from .prolog import PrologInputError, check_puzzle, ensure_prolog_loaded, get_hint, solve_puzzle
 from .schemas import (
+    CheckRequest,
+    CheckResponse,
     ErrorResponse,
     HintRequest,
     HintResponse,
@@ -96,6 +98,16 @@ def solve_endpoint(payload: SolveRequest) -> SolveResponse:
             detail="Não existe solução compatível com o preenchimento atual.",
         )
     return SolveResponse(solution=solution)
+
+
+@app.post(
+    "/api/check",
+    response_model=CheckResponse,
+    responses={422: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
+)
+def check_endpoint(payload: CheckRequest) -> CheckResponse:
+    """Verifica a partida no Prolog, incluindo consistência de entradas parciais."""
+    return CheckResponse(state=check_puzzle(payload.puzzle, payload.entries))
 
 
 @app.post(

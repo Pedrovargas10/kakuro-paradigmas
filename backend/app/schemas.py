@@ -127,6 +127,11 @@ class PuzzleEntriesRequest(BaseModel):
 
 SolveRequest = PuzzleEntriesRequest
 HintRequest = PuzzleEntriesRequest
+CheckRequest = PuzzleEntriesRequest
+
+
+class CheckResponse(BaseModel):
+    state: Literal["incomplete", "inconsistent", "solved"]
 
 
 class SolveResponse(BaseModel):
