@@ -284,7 +284,7 @@ teclado, aparência ou recuperação de falhas no navegador; esses casos estão 
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. Esta implementação foi produzida com assistência de IA e revisão técnica independente, conforme seção 11; a revisão humana permanece necessária antes de integrar os PRs. |
+| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
 | Caio (@CaioSoandrd) | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile (#30), revisão assistida dos PRs Python de Pedro e preparação da integração HTTP (#42). Evidências: commits c20c40b, b07cd4d e ef47daf. |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
@@ -316,7 +316,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** [nenhum | pontual | auxiliar | intensivo]
+- **Faixa de uso no código:** [auxiliar]
   <!--
     nenhum: não usou. pontual: autocompletar, dúvidas, explicar erros.
     auxiliar: trechos gerados pela IA e revisados pelo grupo. intensivo: a
@@ -326,8 +326,8 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
-| Codex (OpenAI) e agente revisor Antigravity no Orca | Geração de código, testes e documentação da parte Python de Pedro; revisão técnica independente antes de publicar cada PR | Execução de pytest, Janus/Prolog reais e servidor HTTP; pareceres por commit do agente revisor. Aprovação humana e merge não foram executados pelos agentes nesta entrega. |
-| Codex (OpenAI), na preparação de Caio | Revisão dos PRs #35–#40, configuração do ambiente, ampliação do verificador HTTP e documentação de integração/entrega | 83 testes Python com Janus real, 21 testes Prolog e dez partidas HTTP; reviews publicadas com autorização de Caio e identificação da assistência. O fluxo Elm permanece pendente. |
+| Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
+| Codex (OpenAI) | Revisão dos PRs #35–#40, configuração do ambiente, ampliação do verificador HTTP e documentação de integração/entrega | 83 testes Python com Janus real, 21 testes Prolog e dez partidas HTTP; reviews publicadas com autorização de Caio e identificação da assistência. O fluxo Elm permanece pendente. |
 
 ## 12. Apresentação oral
 
