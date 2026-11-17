@@ -4,6 +4,7 @@
 
 
 :- use_module(kakuro).
+:- use_module(generator).
 :- use_module(library(plunit)).
 :- use_module(library(lists)).
 
@@ -254,3 +255,52 @@ test(sum_constraint, [nondet]) :-
     run_tests,
     halt
 ), main).
+
+
+% Testes do gerador (issue #22)
+:- begin_tests(generator).
+
+celula_valida(block).
+celula_valida(white).
+celula_valida([A, D]) :-
+    integer(A), A >= 0,
+    integer(D), D >= 0.
+
+puzzle_6x6(P) :-
+    length(P, 6),
+    forall(member(Linha, P),
+           ( length(Linha, 6),
+             forall(member(C, Linha), celula_valida(C)) )).
+
+test(formato_6x6) :-
+    generate(1, P),
+    assertion(puzzle_6x6(P)).
+
+test(solucao_unica) :-
+    generate(2, P),
+    solution_count(P, [], 1).
+
+test(solucao_bate_com_solve) :-
+    generate_with_solution(P, Sol),
+    once(solve(P, [], S2)),
+    msort(Sol, A),
+    msort(S2, B),
+    assertion(A == B).
+
+test(solucao_resolve_o_check) :-
+    generate_with_solution(P, Sol),
+    check(P, Sol, Estado),
+    assertion(Estado == "solved").
+
+test(semente_reproduzivel) :-
+    generate(42, P1),
+    generate(42, P2),
+    assertion(P1 == P2).
+
+test(varias_geracoes) :-
+    forall(between(1, 10, S),
+           ( generate(S, P),
+             puzzle_6x6(P),
+             solution_count(P, [], 1) )).
+
+:- end_tests(generator).
