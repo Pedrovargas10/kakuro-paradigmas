@@ -1,4 +1,18 @@
-.PHONY: install dev test test-prolog test-backend validar
+.PHONY: install install-backend dev dev-backend test test-prolog test-backend test-integration validar
+.DEFAULT_GOAL := install
+
+API_URL ?= http://127.0.0.1:8000
+PARTIDAS ?= 10
+
+install-backend:
+	cd backend && uv sync --locked
+
+dev-backend:
+	cd backend && uv run --locked fastapi dev app/main.py --port 8000
+
+# Requer backend já iniciado; não depende da disponibilidade do frontend.
+test-integration:
+	cd backend && uv run --locked python scripts/verificar_api.py --base-url "$(API_URL)" --partidas "$(PARTIDAS)"
 
 install:
 	cd backend && uv sync
