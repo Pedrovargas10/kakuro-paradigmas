@@ -11,6 +11,9 @@ from .schemas import (
     Cell,
     ClueCell,
     Entry,
+    HintResponse,
+    HintStatusResponse,
+    HintValueResponse,
     PlayableCell,
     Puzzle,
 )
@@ -21,6 +24,8 @@ GENERATOR_PL = PROLOG_DIR / "generator.pl"
 
 _load_lock = Lock()
 _prolog_loaded = False
+
+_VALID_HINT_STATUSES = {"complete", "inconsistent", "no_forced_hint"}
 
 
 class PrologInputError(ValueError):
@@ -138,3 +143,54 @@ def query_prolog(goal: str, params: dict[str, Any] | None = None) -> dict[str, A
         raise PrologInputError(
             "Tabuleiro ou entradas inválidos segundo as regras do Kakuro."
         ) from exc
+
+
+def solve_puzzle(puzzle: Puzzle, entries: list[Entry]) -> list[Entry] | None:
+    """Consulta `kakuro:solve/3` para obter solução compatível com `entries`.
+
+    Retorna `None` quando o preenchimento atual não admite nenhuma solução.
+    """
+    result = query_prolog(
+        "kakuro:solve(Puzzle, Entradas, Solucao)",
+        {
+            "Puzzle": puzzle_to_prolog(puzzle),
+            "Entradas": entries_to_prolog(entries),
+        },
+    )
+    if not result or not result.get("truth") or result.get("Solucao") is None:
+        return None
+
+    return prolog_to_entries(result["Solucao"])
+
+
+def get_hint(puzzle: Puzzle, entries: list[Entry]) -> HintResponse:
+    """Consulta `kakuro:hint/3` e traduz o resultado para o contrato HTTP."""
+    result = query_prolog(
+        "kakuro:hint(Puzzle, Entradas, Resultado)",
+        {
+            "Puzzle": puzzle_to_prolog(puzzle),
+            "Entradas": entries_to_prolog(entries),
+        },
+    )
+    if not result or not result.get("truth") or result.get("Resultado") is None:
+        return HintStatusResponse(kind="inconsistent")
+
+    raw = result["Resultado"]
+    if (
+        isinstance(raw, (list, tuple))
+        and len(raw) == 4
+        and _norm_str(raw[0]) == "hint"
+    ):
+        return HintValueResponse(
+            kind="hint",
+            row=int(raw[1]),
+            col=int(raw[2]),
+            value=int(raw[3]),
+        )
+
+    if isinstance(raw, (str, bytes)):
+        status = _norm_str(raw)
+        if status in _VALID_HINT_STATUSES:
+            return HintStatusResponse(kind=status)  # type: ignore[arg-type]
+
+    raise RuntimeError("Resposta inesperada do motor Prolog ao calcular dica.")
