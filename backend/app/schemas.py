@@ -88,3 +88,80 @@ class Entry(BaseModel):
     value: int = Field(
         ..., ge=MIN_VALUE, le=MAX_VALUE, description="Dígito preenchido (1 a 9)"
     )
+
+
+class PuzzleEntriesRequest(BaseModel):
+    """Payload compartilhado pelas rotas que recebem tabuleiro e entradas."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    puzzle: Puzzle
+    entries: list[Entry] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_entries_on_puzzle(self) -> "PuzzleEntriesRequest":
+        """Garante coordenadas únicas e restritas às casas jogáveis do tabuleiro."""
+        seen: set[tuple[int, int]] = set()
+        for entry in self.entries:
+            coord = (entry.row, entry.col)
+            if coord in seen:
+                raise ValueError(
+                    f"Coordenada duplicada nas entradas: ({entry.row}, {entry.col})."
+                )
+            seen.add(coord)
+
+            cell = self.puzzle.cells[entry.row][entry.col]
+            if cell.kind != "playable":
+                raise ValueError(
+                    f"A casa ({entry.row}, {entry.col}) é do tipo '{cell.kind}' e não pode receber valor."
+                )
+        return self
+
+
+SolveRequest = PuzzleEntriesRequest
+HintRequest = PuzzleEntriesRequest
+CheckRequest = PuzzleEntriesRequest
+
+
+class GenerateResponse(BaseModel):
+    """Resposta da rota POST /api/generate."""
+
+    puzzle: Puzzle
+
+
+class CheckResponse(BaseModel):
+    """Resposta da rota POST /api/check."""
+
+    state: Literal["incomplete", "inconsistent", "solved"]
+
+
+class SolveResponse(BaseModel):
+    """Resposta da rota POST /api/solve."""
+
+    solution: list[Entry]
+
+
+class HintValueResponse(BaseModel):
+    """Resposta da rota POST /api/hint quando há dígito logicamente forçado."""
+
+    kind: Literal["hint"] = "hint"
+    row: int = Field(..., ge=0, lt=GRID_SIZE, description="Índice da linha (0 a 5)")
+    col: int = Field(..., ge=0, lt=GRID_SIZE, description="Índice da coluna (0 a 5)")
+    value: int = Field(
+        ..., ge=MIN_VALUE, le=MAX_VALUE, description="Dígito forçado (1 a 9)"
+    )
+
+
+class HintStatusResponse(BaseModel):
+    """Resposta da rota POST /api/hint quando não há célula sugerida."""
+
+    kind: Literal["complete", "inconsistent", "no_forced_hint"]
+
+
+HintResponse = HintValueResponse | HintStatusResponse
+
+
+class ErrorResponse(BaseModel):
+    """Formato padronizado de erro da API."""
+
+    detail: str
