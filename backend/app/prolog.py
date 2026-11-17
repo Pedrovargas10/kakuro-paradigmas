@@ -14,9 +14,40 @@ KAKURO_PL = PROLOG_DIR / "kakuro.pl"
 _load_lock = Lock()
 _prolog_loaded = False
 
+_INTERNAL_PROLOG_ERROR_MARKERS = (
+    "existence_error",
+    "undefined procedure",
+    "resource_error",
+    "system_error",
+    "syntax_error",
+    "permission_error",
+    "instantiation_error",
+    "out of ",
+)
+_VALIDATION_PROLOG_ERROR_MARKERS = (
+    "invalid_",
+    "validation_error",
+    "kakuro_error",
+    "domain_error",
+    "type_error",
+    "entrada",
+    "tabuleiro",
+    "puzzle",
+    "sequencia",
+    "sequence",
+)
+
 
 class PrologInputError(ValueError):
     """Erro de validação estrutural ou de entrada reportado pelo Prolog."""
+
+
+def _is_validation_prolog_error(exc: Exception) -> bool:
+    """Identifica exceções explícitas de validação do domínio vindas do Prolog."""
+    message = str(exc).lower()
+    if any(marker in message for marker in _INTERNAL_PROLOG_ERROR_MARKERS):
+        return False
+    return any(marker in message for marker in _VALIDATION_PROLOG_ERROR_MARKERS)
 
 
 def ensure_prolog_loaded() -> None:
@@ -71,9 +102,11 @@ def query_prolog(goal: str, params: dict[str, Any] | None = None) -> dict[str, A
     try:
         return janus.query_once(goal, params or {})
     except janus.PrologError as exc:
-        raise PrologInputError(
-            "Tabuleiro ou entradas inválidos segundo as regras do Kakuro."
-        ) from exc
+        if _is_validation_prolog_error(exc):
+            raise PrologInputError(
+                "Tabuleiro ou entradas inválidos segundo as regras do Kakuro."
+            ) from exc
+        raise
 
 
 def solve_puzzle(puzzle: Puzzle, entries: list[Entry]) -> list[Entry] | None:
