@@ -1,0 +1,50 @@
+[
+  [
+    {"kind": "block"},
+    {"kind": "clue", "across": null, "down": 16},
+    {"kind": "clue", "across": null, "down": 3},
+    {"kind": "block"},
+    {"kind": "clue", "across": null, "down": 17},
+    {"kind": "clue", "across": null, "down": 3}
+  ],
+  [
+    {"kind": "clue", "across": 10, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"},
+    {"kind": "clue", "across": 11, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"}
+  ],
+  [
+    {"kind": "clue", "across": 9, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"},
+    {"kind": "clue", "across": 9, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"}
+  ],
+  [
+    {"kind": "block"},
+    {"kind": "block"},
+    {"kind": "clue", "across": null, "down": 3},
+    {"kind": "clue", "across": null, "down": 7},
+    {"kind": "block"},
+    {"kind": "block"}
+  ],
+  [
+    {"kind": "block"},
+    {"kind": "clue", "across": 4, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"},
+    {"kind": "block"},
+    {"kind": "block"}
+  ],
+  [
+    {"kind": "block"},
+    {"kind": "clue", "across": 6, "down": null},
+    {"kind": "playable"},
+    {"kind": "playable"},
+    {"kind": "block"},
+    {"kind": "block"}
+  ]
+]

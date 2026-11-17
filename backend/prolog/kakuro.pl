@@ -4,8 +4,6 @@
 :- use_module(library(lists)).
 :- use_module(library(apply)).  % maplist, include
 
-
-
 %    Puzzle  = lista de 6 listas, cada uma com 6 células.
 %    Célula  = "block" | "white" | [AcrossClue, DownClue]
 %              (0 = sem pista nessa direção)
@@ -13,17 +11,24 @@
 %    Solução  = lista de [Linha, Coluna, Valor]
 
 
-%  1. Normalização de células (strings Python → átomos Prolog)
+%  1. Normalização de células e validação de formato (strings Python → átomos Prolog)
 normalize_cell(Raw, block) :-
     (Raw == block ; Raw == "block"), !.
 normalize_cell(Raw, white) :-
     (Raw == white ; Raw == "white"), !.
 normalize_cell([A, D], clue(A, D)) :-
-    integer(A), integer(D), !.
-
+    integer(A), A >= 0,
+    integer(D), D >= 0, !.
+normalize_cell(Raw, _) :-
+    throw(error(domain_error(kakuro_cell, Raw), context(normalize_cell/2, 'célula inválida'))).
 
 normalize_puzzle(RawPuzzle, Puzzle) :-
-    maplist(maplist(normalize_cell), RawPuzzle, Puzzle).
+    (   is_list(RawPuzzle),
+        length(RawPuzzle, 6),
+        forall(member(Row, RawPuzzle), (is_list(Row), length(Row, 6)))
+    ->  maplist(maplist(normalize_cell), RawPuzzle, Puzzle)
+    ;   throw(error(domain_error(kakuro_grid_6x6, RawPuzzle), context(normalize_puzzle/2, 'grade deve ser 6x6')))
+    ).
 
 
 
@@ -75,7 +80,8 @@ collect_whites_h([white|Rest], R, C, [pos(R,C)|Cells], Rem, NC) :-
     !,
     C1 is C + 1,
     collect_whites_h(Rest, R, C1, Cells, Rem, NC).
-collect_whites_h(Other, _, C, [], Other, C).
+collect_whites_h([Cell|Rest], _, C, [], [Cell|Rest], C) :-
+    Cell \= white.
 
 % verticais:
 v_seqs([], _, []).
@@ -104,10 +110,11 @@ collect_whites_v([white|Rest], C, R, [pos(R,C)|Cells], Rem, NR) :-
     !,
     R1 is R + 1,
     collect_whites_v(Rest, C, R1, Cells, Rem, NR).
-collect_whites_v(Other, _, R, [], Other, R).
+collect_whites_v([Cell|Rest], _, R, [], [Cell|Rest], R) :-
+    Cell \= white.
 
 
-%  4. Coleta das posições em bramco 
+%  4. Coleta das posições brancas
 white_positions(Puzzle, Positions) :-
     white_pos_(Puzzle, 0, Positions).
 
@@ -147,10 +154,15 @@ lookup(Pos, [Pos-V|_], V) :- !.
 lookup(Pos, [_|Rest], V)  :- lookup(Pos, Rest, V).
 
 apply_entries([], _).
-apply_entries([[L,C,Val]|Es], Map) :-
-    lookup(pos(L,C), Map, Var),
-    Var #= Val,
-    apply_entries(Es, Map).
+apply_entries([Entry|Es], Map) :-
+    (   Entry = [L, C, Val],
+        integer(L), integer(C), integer(Val),
+        between(1, 9, Val),
+        lookup(pos(L, C), Map, Var)
+    ->  Var #= Val,
+        apply_entries(Es, Map)
+    ;   throw(error(domain_error(kakuro_entry, Entry), context(apply_entries/2, 'entrada inválida ou fora de casa branca')))
+    ).
 
 post_constraints([], _).
 post_constraints([seq(Clue, Cells)|Seqs], Map) :-
@@ -163,30 +175,19 @@ lookup_in(Map, Pos, Var) :- lookup(Pos, Map, Var).
 
 %  6. solution_count(+Puzzle, +Entradas, -N)
 %     N ∈ {0, 1, 2}  –  para de contar ao atingir 2.
+%     Usa findall + solve para coletar soluções; limita a 2.
 
 solution_count(Puzzle, Entradas, N) :-
-    (   catch(
-            setup(Puzzle, Entradas, _Map, Vars),
-            _, fail)
-    ->  count_up_to_2(Vars, N)
-    ;   N = 0
+    findall(_, solve(Puzzle, Entradas, _), Sols),
+    length(Sols, Total),
+    (   Total >= 2
+    ->  N = 2
+    ;   N = Total
     ).
 
-%  conta soluções (via labeling) até no máximo 2.
-%  usa findall com um limite manual para não explorar todas as soluções.
-count_up_to_2(Vars, N) :-
-    State = count(0),
-    (   labeling([ff], Vars),
-        arg(1, State, K),
-        K1 is K + 1,
-        nb_setarg(1, State, K1),
-        K1 >= 2, !       % Para ao atingir 2
-    ;   true
-    ),
-    arg(1, State, N).
 
-
-%  7. solve  +Puzzle, +Entradas, -Solucao
+%  7. solve(+Puzzle, +Entradas, -Solucao)
+%     Falha se não houver solução.
 solve(Puzzle, Entradas, Solucao) :-
     setup(Puzzle, Entradas, VarMap, AllVars),
     labeling([ff], AllVars),
@@ -196,61 +197,52 @@ pair_to_entry(pos(R,C)-V, [R,C,V]).
 
 
 
-%  8. check Estado = "solved" | "incomplete" | "inconsistent"
+%  8. check(+Puzzle, +Entradas, -Estado)
+%     Estado = "solved" | "incomplete" | "inconsistent"
+%
+%     Monta as restrições via setup.  Se setup falha (entradas contradizem
+%     as pistas), devolve "inconsistent".  Se as variáveis ficaram todas
+%     ground, devolve "solved".  Senão, tenta labeling: se encontra
+%     solução, devolve "incomplete"; se não, "inconsistent".
+
 check(Puzzle, Entradas, Estado) :-
-    normalize_puzzle(Puzzle, NPuzzle),
-    white_positions(NPuzzle, Positions),
-    length(Positions, Total),
-    length(Entradas, Given),
-    (   Given < Total
-    ->  % Parcial: ver se ainda há pelo menos uma solução
-        (   catch(
-                ( setup(Puzzle, Entradas, _M, Vs),
-                  copy_term(Vs, Vs2),
-                  labeling([ff], Vs2) ),
-                _, fail)
-        ->  Estado = "incomplete"
-        ;   Estado = "inconsistent"
-        )
-    ;   % Completo: verificar validade
-        (   catch(
-                ( setup(Puzzle, Entradas, _M2, Vs3),
-                  ground(Vs3) ),
-                _, fail)
+    (   setup(Puzzle, Entradas, _Map, Vs)
+    ->  (   ground(Vs)
         ->  Estado = "solved"
-        ;   Estado = "inconsistent"
+        ;   copy_term(Vs, Vs2),
+            (   labeling([ff], Vs2)
+            ->  Estado = "incomplete"
+            ;   Estado = "inconsistent"
+            )
         )
+    ;   Estado = "inconsistent"
     ).
 
 
-
-
-
-%  9. hint
+%  9. hint(+Puzzle, +Entradas, -Resultado)
 %     Resultado = ["hint", L, C, V]
 %               | "complete"
 %               | "inconsistent"
 %               | "no_forced_hint"
+%
+%     Se tudo preenchido e correto → "complete".
+%     Se tudo preenchido e errado  → "inconsistent".
+%     Se setup falha               → "inconsistent".
 
 hint(Puzzle, Entradas, Resultado) :-
-    normalize_puzzle(Puzzle, NPuzzle),
-    white_positions(NPuzzle, Positions),
-    length(Positions, Total),
-    length(Entradas, Given),
-    (   Given >= Total
-    ->  Resultado = "complete"
-    ;   (   catch(
-                setup(Puzzle, Entradas, VarMap, Vars),
-                _, fail)
-        ->  copy_term(Vars, TestVars),
+    (   setup(Puzzle, Entradas, VarMap, Vars)
+    ->  (   ground(Vars)
+        ->  % Tudo preenchido.  Se setup não falhou e está ground,
+            % as restrições CLP(FD) estão satisfeitas.
+            Resultado = "complete"
+        ;   copy_term(Vars, TestVars),
             (   labeling([ff], TestVars)
-            ->  % Consistente – procurar célula forçada
-                filled_set(Entradas, Filled),
+            ->  filled_set(Entradas, Filled),
                 find_forced(VarMap, Filled, Resultado)
             ;   Resultado = "inconsistent"
             )
-        ;   Resultado = "inconsistent"
         )
+    ;   Resultado = "inconsistent"
     ).
 
 filled_set([], []).
