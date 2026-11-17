@@ -64,11 +64,39 @@ A ponte mantém esse limite e converte falha/timeout em 503. O Python não usa
 
 ## Dependências e limites desta entrega
 
-- O alvo `make test-backend` está no PR #30 de Caio; até sua integração, executar
-  `uv run --locked pytest` diretamente em `backend/`.
+- Nesta branch de integração, o Makefile do PR #30 está disponível localmente.
+  Os merges na `main` continuam sendo acompanhados nos PRs.
 - Os fixtures compartilhados dependem da issue #14. Os testes Python usam uma
   transcrição identificada do puzzle fixo já presente nos testes Prolog.
 - Validação estrutural e correções do motor Prolog continuam nas issues #12,
   #13 e #21. Esta entrega não declara essas tarefas concluídas.
 - A documentação e a verificação acima cobrem a API. A infraestrutura Elm e o
   fluxo visual permanecem nas tarefas da equipe de frontend.
+
+
+## Preparação da Fase 3 sem frontend
+
+Na raiz, executar `make install-backend` e, em um terminal, `make dev-backend`.
+Em outro terminal, executar `make test-integration` (dez partidas por padrão).
+Para outro servidor ou amostra: `make test-integration API_URL=http://127.0.0.1:8001 PARTIDAS=2`.
+O backend deve estar iniciado; o alvo de teste não inicia nem encerra servidores.
+
+Além do fluxo de sucesso, cada partida confere:
+
+- Preservação de todas as entradas de uma partida parcial ao resolver.
+- Entrada incompatível em puzzle único: `check` e `hint` retornam `inconsistent`,
+  enquanto `solve` retorna 422 com `detail` legível.
+- Rejeição de entradas duplicadas, valor zero e coordenada fora da grade nas
+  três rotas que recebem entradas; rejeição de campos extras na geração.
+- Nova resolução válida após as rejeições.
+
+Falha em qualquer condição encerra o comando com código diferente de zero.
+A recuperação acima é da API após erros de entrada. Preservação do estado do
+jogador após falha de rede, bloqueio dos controles e decodificação Elm continuam
+pendentes do teste no navegador (#28/#29). Os cenários de 500/503 permanecem
+cobertos no pytest; não se provoca falha artificial no servidor em execução.
+
+
+Se o modo `dev` falhar com `Too many open files` no monitor WatchFiles,
+executar `WATCHFILES_FORCE_POLLING=true make dev-backend`. Esse ajuste usa
+polling para recarga automática e não altera o contrato da API.
