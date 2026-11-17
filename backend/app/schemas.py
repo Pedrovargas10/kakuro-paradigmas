@@ -2,7 +2,14 @@
 
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    StrictInt,
+    field_validator,
+    model_validator,
+)
 
 GRID_SIZE = 6
 MIN_VALUE = 1
@@ -31,8 +38,8 @@ class ClueCell(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     kind: Literal["clue"] = "clue"
-    across: int | None = None
-    down: int | None = None
+    across: StrictInt | None = None
+    down: StrictInt | None = None
 
     @model_validator(mode="after")
     def validate_clues(self) -> "ClueCell":
@@ -83,9 +90,9 @@ class Entry(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    row: int = Field(..., ge=0, lt=GRID_SIZE, description="Índice da linha (0 a 5)")
-    col: int = Field(..., ge=0, lt=GRID_SIZE, description="Índice da coluna (0 a 5)")
-    value: int = Field(
+    row: StrictInt = Field(..., ge=0, lt=GRID_SIZE, description="Índice da linha (0 a 5)")
+    col: StrictInt = Field(..., ge=0, lt=GRID_SIZE, description="Índice da coluna (0 a 5)")
+    value: StrictInt = Field(
         ..., ge=MIN_VALUE, le=MAX_VALUE, description="Dígito preenchido (1 a 9)"
     )
 
