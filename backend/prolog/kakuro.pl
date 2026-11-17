@@ -1,4 +1,4 @@
-:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
+﻿:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
 
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
@@ -173,17 +173,14 @@ post_constraints([seq(Clue, Cells)|Seqs], Map) :-
 
 lookup_in(Map, Pos, Var) :- lookup(Pos, Map, Var).
 
-%  6. solution_count(+Puzzle, +Entradas, -N)
-%     N ∈ {0, 1, 2}  –  para de contar ao atingir 2.
-%     Usa findall + solve para coletar soluções; limita a 2.
 
+%  6. solution_count(+Puzzle, +Entradas, -N)
+%     N ∈ {0, 1, 2}.  findnsols/4 para a busca assim que acha 2 soluções,
+%     então o gerador não precisa enumerar todas para checar unicidade.
+%     Erros de formato lançados por setup/4 sobem normalmente.
 solution_count(Puzzle, Entradas, N) :-
-    findall(_, solve(Puzzle, Entradas, _), Sols),
-    length(Sols, Total),
-    (   Total >= 2
-    ->  N = 2
-    ;   N = Total
-    ).
+    once(findnsols(2, Sol, solve(Puzzle, Entradas, Sol), Sols)),
+    length(Sols, N).
 
 
 %  7. solve(+Puzzle, +Entradas, -Solucao)
@@ -195,68 +192,56 @@ solve(Puzzle, Entradas, Solucao) :-
 
 pair_to_entry(pos(R,C)-V, [R,C,V]).
 
+all_filled(VarMap, Entradas) :-
+    filled_set(Entradas, Filled),
+    forall(member(Pos-_, VarMap), memberchk(Pos, Filled)).
+
+filled_set([], []).
+filled_set([[L,C,_]|Es], [pos(L,C)|Rest]) :-
+    filled_set(Es, Rest).
 
 
 %  8. check(+Puzzle, +Entradas, -Estado)
 %     Estado = "solved" | "incomplete" | "inconsistent"
-%
-%     Monta as restrições via setup.  Se setup falha (entradas contradizem
-%     as pistas), devolve "inconsistent".  Se as variáveis ficaram todas
-%     ground, devolve "solved".  Senão, tenta labeling: se encontra
-%     solução, devolve "incomplete"; se não, "inconsistent".
 
 check(Puzzle, Entradas, Estado) :-
-    (   setup(Puzzle, Entradas, _Map, Vs)
-    ->  (   ground(Vs)
+    (   setup(Puzzle, Entradas, VarMap, Vars)
+    ->  (   all_filled(VarMap, Entradas)
         ->  Estado = "solved"
-        ;   copy_term(Vs, Vs2),
-            (   labeling([ff], Vs2)
-            ->  Estado = "incomplete"
-            ;   Estado = "inconsistent"
-            )
+        ;   once(labeling([ff], Vars))
+        ->  Estado = "incomplete"
+        ;   Estado = "inconsistent"
         )
     ;   Estado = "inconsistent"
     ).
 
 
 %  9. hint(+Puzzle, +Entradas, -Resultado)
-%     Resultado = ["hint", L, C, V]
-%               | "complete"
-%               | "inconsistent"
-%               | "no_forced_hint"
-%
-%     Se tudo preenchido e correto → "complete".
-%     Se tudo preenchido e errado  → "inconsistent".
-%     Se setup falha               → "inconsistent".
 
 hint(Puzzle, Entradas, Resultado) :-
-    (   setup(Puzzle, Entradas, VarMap, Vars)
-    ->  (   ground(Vars)
-        ->  % Tudo preenchido.  Se setup não falhou e está ground,
-            % as restrições CLP(FD) estão satisfeitas.
-            Resultado = "complete"
-        ;   copy_term(Vars, TestVars),
-            (   labeling([ff], TestVars)
-            ->  filled_set(Entradas, Filled),
-                find_forced(VarMap, Filled, Resultado)
-            ;   Resultado = "inconsistent"
-            )
+    (   setup(Puzzle, Entradas, VarMap, _)
+    ->  (   all_filled(VarMap, Entradas)
+        ->  Resultado = "complete"
+        ;   once(solve(Puzzle, Entradas, Candidata))
+        ->  filled_set(Entradas, Filled),
+            first_forced(Puzzle, Entradas, Filled, Candidata, Resultado)
+        ;   Resultado = "inconsistent"
         )
     ;   Resultado = "inconsistent"
     ).
 
-filled_set([], []).
-filled_set([[L,C,_]|Es], [pos(L,C)|Rest]) :-
-    filled_set(Es, Rest).
-
-find_forced([], _, "no_forced_hint").
-find_forced([pos(R,C)-Var|Rest], Filled, Resultado) :-
-    (   member(pos(R,C), Filled)
-    ->  find_forced(Rest, Filled, Resultado)       % já preenchida
-    ;   fd_size(Var, Size),
-        (   Size == 1
-        ->  fd_dom(Var, Val..Val),
-            Resultado = ["hint", R, C, Val]
-        ;   find_forced(Rest, Filled, Resultado)
-        )
+%  Percorre a solução candidata e devolve a primeira casa vazia forçada.
+first_forced(_, _, _, [], "no_forced_hint").
+first_forced(Puzzle, Entradas, Filled, [[R,C,V]|Rest], Resultado) :-
+    (   \+ memberchk(pos(R,C), Filled),
+        \+ alternative_exists(Puzzle, Entradas, R, C, V)
+    ->  Resultado = ["hint", R, C, V]
+    ;   first_forced(Puzzle, Entradas, Filled, Rest, Resultado)
     ).
+
+%  Existe solução em que a casa (R,C) tem valor diferente de V?
+alternative_exists(Puzzle, Entradas, R, C, V) :-
+    setup(Puzzle, Entradas, VarMap, Vars),
+    lookup(pos(R,C), VarMap, X),
+    X #\= V,
+    once(labeling([ff], Vars)).

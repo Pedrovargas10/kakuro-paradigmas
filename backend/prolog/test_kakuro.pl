@@ -3,9 +3,11 @@
 %  Rodar:   swipl -g run_tests -t halt test_kakuro.pl
 
 :- use_module(kakuro).
+:- use_module(generator).
 :- use_module('../../docs/fixtures/fixtures').
 :- use_module(library(plunit)).
 :- use_module(library(lists)).
+:- use_module(library(time)).
 
 
 % Puzzle "mini" 4 casas brancas num grid 6×6, solução única
@@ -141,8 +143,19 @@ test(check_solved) :-
     check(P, Entries, Estado),
     assertion(Estado == "solved").
 
+% Revisão PR #49: 1 de 4 casas preenchida é "incomplete", mesmo que o
+% CLP(FD) consiga deduzir as outras 3 por propagação.
 test(check_incomplete) :-
-    % puzzle_full tem 11 casas: uma entrada parcial não propaga tudo
+    puzzle_mini(P),
+    check(P, [[1,1,3]], Estado),
+    assertion(Estado == "incomplete").
+
+test(check_incomplete_fixture) :-
+    fixture_puzzle(1, P),
+    check(P, [[1,1,3]], Estado),
+    assertion(Estado == "incomplete").
+
+test(check_incomplete_larger) :-
     puzzle_full(P),
     check(P, [[1,1,9]], Estado),
     assertion(Estado == "incomplete").
@@ -185,29 +198,46 @@ test(hint_inconsistent) :-
     hint(P, [], Resultado),
     assertion(Resultado == "inconsistent").
 
-% No puzzle mini, 3 entradas corretas propagam a 4ª automaticamente.
-test(hint_propagation_completes) :-
+% Revisão PR #49: com 3 de 4 casas, a dica é a casa (2,2) que falta.
+test(hint_returns_last_cell) :-
     puzzle_mini(P),
     hint(P, [[1,1,3],[1,2,4],[2,1,1]], Resultado),
-    assertion(Resultado == "complete").
+    assertion(Resultado == ["hint", 2, 2, 2]).
 
-% No puzzle_full, com poucas entradas, hint encontra dica ou diz no_forced.
-test(hint_on_larger_puzzle, [true(is_hint_or_no_forced(R))]) :-
-    puzzle_full(P),
-    hint(P, [[1,1,9]], R).
-
-test(hint_from_empty_unique, [true(is_hint_or_no_forced(R))]) :-
+% Issue #21: em puzzle com solução única, tabuleiro vazio sempre dá dica,
+% e o valor revelado é o da solução.
+test(hint_from_empty_unique) :-
     puzzle_mini(P),
-    hint(P, [], R).
+    hint(P, [], R),
+    assertion(R = ["hint", _, _, _]),
+    R = ["hint", L, C, V],
+    puzzle_mini_solution(Sol),
+    assertion(memberchk([L, C, V], Sol)).
+
+% Issue #21: nunca revela casa que o jogador já preencheu.
+test(hint_skips_filled_cells) :-
+    puzzle_mini(P),
+    hint(P, [[1,1,3]], ["hint", L, C, _]),
+    assertion([L, C] \== [1, 1]).
+
+
+test(hint_no_forced_hint) :-
+    puzzle_two_solutions(P),
+    hint(P, [], R),
+    assertion(R == "no_forced_hint").
+
+test(hint_fixtures_match_solution) :-
+    forall(member(Id, [1, 2, 3]),
+           ( fixture_puzzle(Id, P),
+             fixture_solution(Id, Sol),
+             hint(P, [], ["hint", L, C, V]),
+             assertion(memberchk([L, C, V], Sol)) )).
 
 
 test(hint_full_but_wrong_is_inconsistent) :-
     puzzle_mini(P),
     hint(P, [[1,1,1],[1,2,2],[2,1,3],[2,2,1]], Resultado),
     assertion(Resultado == "inconsistent").
-
-is_hint_or_no_forced(["hint",_,_,_]).
-is_hint_or_no_forced("no_forced_hint").
 
 :- end_tests(hint).
 
@@ -277,3 +307,63 @@ test(all_fixtures_have_unique_solution) :-
     )).
 
 :- end_tests(fixtures).
+
+
+:- begin_tests(solution_count_bounded).
+
+test(stops_at_two_solutions) :-
+    Row = [[25,0], "white", "white", "white", "white", "white"],
+    P = [["block", [0,25], [0,25], [0,25], [0,25], [0,25]],
+         Row, Row, Row, Row, Row],
+    call_with_time_limit(1, solution_count(P, [], N)),
+    assertion(N == 2).
+
+:- end_tests(solution_count_bounded).
+
+
+:- begin_tests(generator).
+
+celula_valida(block).
+celula_valida(white).
+celula_valida([A, D]) :-
+    integer(A), A >= 0,
+    integer(D), D >= 0.
+
+puzzle_6x6(P) :-
+    length(P, 6),
+    forall(member(Linha, P),
+           ( length(Linha, 6),
+             forall(member(C, Linha), celula_valida(C)) )).
+
+test(formato_6x6) :-
+    generate(1, P),
+    assertion(puzzle_6x6(P)).
+
+test(solucao_unica) :-
+    generate(2, P),
+    solution_count(P, [], 1).
+
+test(solucao_bate_com_solve) :-
+    generate_with_solution(P, Sol),
+    once(solve(P, [], S2)),
+    msort(Sol, A),
+    msort(S2, B),
+    assertion(A == B).
+
+test(solucao_resolve_o_check) :-
+    generate_with_solution(P, Sol),
+    check(P, Sol, Estado),
+    assertion(Estado == "solved").
+
+test(semente_reproduzivel) :-
+    generate(42, P1),
+    generate(42, P2),
+    assertion(P1 == P2).
+
+test(varias_geracoes) :-
+    forall(between(1, 10, S),
+           ( generate(S, P),
+             puzzle_6x6(P),
+             solution_count(P, [], 1) )).
+
+:- end_tests(generator).
