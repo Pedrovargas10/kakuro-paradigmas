@@ -1,0 +1,156 @@
+{
+  "puzzle": {
+    "cells": [
+      [
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "clue",
+          "across": null,
+          "down": 4
+        },
+        {
+          "kind": "clue",
+          "across": null,
+          "down": 6
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ],
+      [
+        {
+          "kind": "clue",
+          "across": 7,
+          "down": null
+        },
+        {
+          "kind": "playable"
+        },
+        {
+          "kind": "playable"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ],
+      [
+        {
+          "kind": "clue",
+          "across": 3,
+          "down": null
+        },
+        {
+          "kind": "playable"
+        },
+        {
+          "kind": "playable"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ],
+      [
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ],
+      [
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ],
+      [
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        },
+        {
+          "kind": "block"
+        }
+      ]
+    ]
+  },
+  "solution": [
+    {
+      "row": 1,
+      "col": 1,
+      "value": 3
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "value": 4
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "value": 1
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "value": 2
+    }
+  ]
+}

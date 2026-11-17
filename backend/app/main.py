@@ -1,20 +1,40 @@
 """Aplicação FastAPI do Kakuro com rotas de resolução, dica e tratamento de erros."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .prolog import PrologInputError, get_hint, solve_puzzle
+from .prolog import (
+    GenerationUnavailableError,
+    PrologInputError,
+    check_puzzle,
+    ensure_prolog_loaded,
+    generate_puzzle,
+    get_hint,
+    solve_puzzle,
+)
 from .schemas import (
+    CheckRequest,
+    CheckResponse,
     ErrorResponse,
+    GenerateRequest,
+    GenerateResponse,
     HintRequest,
     HintResponse,
     SolveRequest,
     SolveResponse,
 )
 
-app = FastAPI(title="Kakuro API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_prolog_loaded()
+    yield
+
+
+app = FastAPI(title="Kakuro API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -74,6 +94,31 @@ async def unhandled_exception_handler(
     )
 
 
+@app.exception_handler(GenerationUnavailableError)
+async def generation_unavailable_handler(
+    request: Request, exc: GenerationUnavailableError
+) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+@app.post(
+    "/api/generate",
+    response_model=GenerateResponse,
+    responses={
+        422: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
+def generate_endpoint(payload: GenerateRequest) -> GenerateResponse:
+    """Solicita um puzzle ao Prolog sem incluir a solução na resposta."""
+    try:
+        return GenerateResponse(puzzle=generate_puzzle())
+    except PrologInputError as exc:
+        # O cliente não fornece puzzle à geração; sua rejeição é falha do motor.
+        raise RuntimeError("O motor Prolog rejeitou os dados da geração.") from exc
+
+
 @app.post(
     "/api/solve",
     response_model=SolveResponse,
@@ -88,6 +133,16 @@ def solve_endpoint(payload: SolveRequest) -> SolveResponse:
             detail="Não existe solução compatível com o preenchimento atual.",
         )
     return SolveResponse(solution=solution)
+
+
+@app.post(
+    "/api/check",
+    response_model=CheckResponse,
+    responses={422: {"model": ErrorResponse}, 500: {"model": ErrorResponse}},
+)
+def check_endpoint(payload: CheckRequest) -> CheckResponse:
+    """Verifica a partida no Prolog, incluindo consistência de entradas parciais."""
+    return CheckResponse(state=check_puzzle(payload.puzzle, payload.entries))
 
 
 @app.post(

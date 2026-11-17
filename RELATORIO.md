@@ -208,15 +208,23 @@
 
 ## 7. Integração
 
-<!--
-  Curto: a parte Python não é avaliada. Liste as rotas ou a forma de
-  comunicação e o formato dos dados trocados. Se o grupo não usou Python,
-  explique como Elm e Prolog se comunicam.
--->
+O Elm se comunica por HTTP/JSON com FastAPI. O Python valida o formato,
+converte os dados e consulta o SWI-Prolog pelo Janus com parâmetros vinculados.
+As regras do jogo permanecem no Prolog. A opção A acordada na issue #4 usa
+`"block"`, `"white"` e pistas como pares numéricos na fronteira Janus;
+entradas e soluções são triplas de linha, coluna e valor, com coordenadas desde 0.
 
 | Rota / chamada | Entrada | Saída | Predicado Prolog |
 |----------------|---------|-------|------------------|
-| [`POST /api/...`] | [...] | [...] | [`...`] |
+| `POST /api/generate` | Objeto vazio | Puzzle 6x6 sem solução | `generator:generate/1` |
+| `POST /api/check` | Puzzle e entradas | Estado incomplete, inconsistent ou solved | `kakuro:check/3` |
+| `POST /api/solve` | Puzzle e entradas | Lista de valores da solução compatível | `kakuro:solve/3` |
+| `POST /api/hint` | Puzzle e entradas | Dica ou estado complete, inconsistent, no_forced_hint | `kakuro:hint/3` |
+
+A implementação está em `backend/app/main.py:113`, `backend/app/main.py:143`
+e `backend/app/prolog.py:144`. Entrada inválida retorna 422; geração que falha
+ou esgota 10 segundos retorna 503; erro interno retorna 500 com mensagem controlada.
+O roteiro de Swagger e o teste HTTP estão em `docs/API_PYTHON.md`.
 
 ## 8. Testes e validação
 
@@ -228,6 +236,20 @@
 - [O que foi testado e como.]
 - [Casos de borda considerados.]
 
+Na entrega Python das issues #6, #10, #15, #16, #23 e #24, a suíte
+`cd backend && uv run --locked pytest` passou 83 testes. Ela cobre contratos
+estritos, entradas duplicadas ou em casas não jogáveis, erros 422/500/503,
+conversões e integração Janus real. A contagem de soluções é conferida pelo
+próprio Prolog. Os dados fixos de teste têm sua origem documentada em
+`backend/tests/fixtures/README.md`. Esses resultados não substituem os testes
+plunit nem a verificação do frontend.
+
+O comando `uv run --locked python scripts/verificar_api.py --partidas 10`,
+contra um servidor `fastapi dev` real, completou dez partidas pelo fluxo
+gerar, verificar, resolver, dica e conclusão. Neste ambiente (Python 3.12.3,
+SWI-Prolog 10.0.2 e uv 0.8.14), a geração levou em média 1,985 s e no máximo
+6,166 s. É uma amostra local, não uma garantia de desempenho em outras máquinas.
+
 ## 9. Limitações e problemas conhecidos
 
 <!--
@@ -238,6 +260,12 @@
 - [Limitação ou bug conhecido, e em que situação acontece.]
 - [O que o grupo faria com mais tempo.]
 
+Na integração Python, os comandos diretos com uv já permitem executar e testar
+o backend. O Makefile ainda depende da conclusão do PR #30; os fixtures
+compartilhados dependem da issue #14. Validações estruturais e ajustes de dicas
+do motor permanecem nas issues Prolog #12, #13 e #21. O teste HTTP não avalia
+teclado, aparência ou recuperação de falhas no navegador; esses casos estão na #29.
+
 ## 10. Contribuição de cada integrante
 
 <!--
@@ -247,6 +275,7 @@
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
+| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. Esta implementação foi produzida com assistência de IA e revisão técnica independente, conforme seção 11; a revisão humana permanece necessária antes de integrar os PRs. |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
@@ -272,6 +301,10 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 
 **Referências.** [Livros, documentação, tutoriais, repositórios consultados.]
 
+Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.swi-prolog.org/pldoc/man?section=janus-call-prolog),
+[FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/) e
+[uv: lockfile e sincronização](https://docs.astral.sh/uv/concepts/projects/sync/).
+
 **Uso de ferramentas de IA.**
 
 - **Faixa de uso no código:** [nenhum | pontual | auxiliar | intensivo]
@@ -284,6 +317,7 @@ módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
+| Codex (OpenAI) e agente revisor Antigravity no Orca | Geração de código, testes e documentação da parte Python de Pedro; revisão técnica independente antes de publicar cada PR | Execução de pytest, Janus/Prolog reais e servidor HTTP; pareceres por commit do agente revisor. Aprovação humana e merge não foram executados pelos agentes nesta entrega. |
 | [Nome ou "nenhuma"] | [...] | [...] |
 
 ## 12. Apresentação oral

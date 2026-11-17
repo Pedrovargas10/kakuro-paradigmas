@@ -1,0 +1,25 @@
+[project]
+name = "kakuro-backend"
+version = "0.1.0"
+description = "API HTTP do Kakuro e integração com SWI-Prolog via Janus"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115,<1",
+    "janus-swi>=1.5.3,<2",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28,<1",
+    "pytest>=8,<10",
+]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.uv]
+no-binary-package = ["janus-swi"]

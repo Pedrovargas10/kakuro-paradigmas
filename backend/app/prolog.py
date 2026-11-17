@@ -9,6 +9,7 @@ import janus_swi as janus
 from .schemas import (
     BlockCell,
     Cell,
+    ClueCell,
     Entry,
     HintResponse,
     HintStatusResponse,
@@ -19,11 +20,14 @@ from .schemas import (
 
 PROLOG_DIR = Path(__file__).resolve().parent.parent / "prolog"
 KAKURO_PL = PROLOG_DIR / "kakuro.pl"
+GENERATOR_PL = PROLOG_DIR / "generator.pl"
 
 _load_lock = Lock()
 _prolog_loaded = False
 
 _VALID_HINT_STATUSES = {"complete", "inconsistent", "no_forced_hint"}
+_VALID_CHECK_STATES = {"incomplete", "inconsistent", "solved"}
+GENERATION_TIMEOUT_SECONDS = 10
 
 _INTERNAL_PROLOG_ERROR_MARKERS = (
     "existence_error",
@@ -53,27 +57,33 @@ class PrologInputError(ValueError):
     """Erro de validação estrutural ou de entrada reportado pelo Prolog."""
 
 
+class GenerationUnavailableError(RuntimeError):
+    """O gerador não produziu um puzzle dentro do limite de tempo."""
+
+
 def _is_validation_prolog_error(exc: Exception) -> bool:
     """Identifica exceções explícitas de validação do domínio vindas do Prolog."""
-    message = str(exc).lower()
+    # A mensagem legível do Janus não preserva nomes como domain_error/2.
+    term = getattr(exc, "term", None)
+    message = (repr(term) if term is not None else str(exc)).lower()
     if any(marker in message for marker in _INTERNAL_PROLOG_ERROR_MARKERS):
         return False
     return any(marker in message for marker in _VALIDATION_PROLOG_ERROR_MARKERS)
 
 
 def ensure_prolog_loaded() -> None:
-    """Carrega o módulo Prolog `kakuro.pl` uma única vez na sessão do Janus."""
+    """Carrega os módulos Prolog compartilhados uma única vez por processo."""
     global _prolog_loaded
     if _prolog_loaded:
         return
     with _load_lock:
         if _prolog_loaded:
             return
-        if not KAKURO_PL.exists():
-            raise FileNotFoundError(
-                f"Arquivo Prolog não encontrado: {KAKURO_PL}"
-            )
-        janus.consult(str(KAKURO_PL))
+        for source in (KAKURO_PL, GENERATOR_PL):
+            if not source.is_file():
+                raise FileNotFoundError(f"Arquivo Prolog não encontrado: {source}")
+        for source in (KAKURO_PL, GENERATOR_PL):
+            janus.consult(str(source))
         _prolog_loaded = True
 
 
@@ -92,6 +102,30 @@ def cell_to_prolog(cell: Cell) -> str | list[int]:
 def puzzle_to_prolog(puzzle: Puzzle) -> list[list[str | list[int]]]:
     """Converte um tabuleiro 6x6 para listas aninhadas compatíveis com o Janus."""
     return [[cell_to_prolog(cell) for cell in row] for row in puzzle.cells]
+
+
+def prolog_to_cell(raw: Any) -> Cell:
+    if raw == "block":
+        return BlockCell()
+    if raw == "white":
+        return PlayableCell()
+    if (
+        isinstance(raw, list)
+        and len(raw) == 2
+        and all(type(value) is int for value in raw)
+    ):
+        across, down = raw
+        return ClueCell(
+            across=None if across == 0 else across,
+            down=None if down == 0 else down,
+        )
+    raise RuntimeError("Célula inesperada retornada pelo motor Prolog.")
+
+
+def prolog_to_puzzle(raw: Any) -> Puzzle:
+    if not isinstance(raw, list) or any(not isinstance(row, list) for row in raw):
+        raise RuntimeError("Tabuleiro inesperado retornado pelo motor Prolog.")
+    return Puzzle(cells=[[prolog_to_cell(cell) for cell in row] for row in raw])
 
 
 def entries_to_prolog(entries: list[Entry]) -> list[list[int]]:
@@ -143,6 +177,35 @@ def _norm_str(value: Any) -> str:
     if isinstance(value, bytes):
         return value.decode("utf-8")
     return str(value)
+
+
+def check_puzzle(puzzle: Puzzle, entries: list[Entry]) -> str:
+    result = query_prolog(
+        "kakuro:check(Puzzle, Entradas, Estado)",
+        {"Puzzle": puzzle_to_prolog(puzzle), "Entradas": entries_to_prolog(entries)},
+    )
+    if result.get("truth") is False:
+        raise PrologInputError("Tabuleiro ou entradas inválidos segundo as regras do Kakuro.")
+    state = _norm_str(result.get("Estado"))
+    if result.get("truth") is not True or state not in _VALID_CHECK_STATES:
+        raise RuntimeError("Resposta inesperada do motor Prolog ao verificar partida.")
+    return state
+
+
+def generate_puzzle() -> Puzzle:
+    # O gerador pode falhar ao atingir seu limite ou propagar a exceção de tempo.
+    result = query_prolog(
+        "catch(call_with_time_limit(Seconds, generator:generate(Puzzle)), "
+        "time_limit_exceeded, fail)",
+        {"Seconds": GENERATION_TIMEOUT_SECONDS},
+    )
+    if result.get("truth") is False:
+        raise GenerationUnavailableError(
+            "Não foi possível gerar um puzzle no limite de 10 segundos. Tente novamente."
+        )
+    if result.get("truth") is not True or result.get("Puzzle") is None:
+        raise RuntimeError("Resposta inesperada do motor Prolog ao gerar puzzle.")
+    return prolog_to_puzzle(result["Puzzle"])
 
 
 def get_hint(puzzle: Puzzle, entries: list[Entry]) -> HintResponse:
