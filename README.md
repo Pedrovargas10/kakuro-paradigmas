@@ -7,8 +7,7 @@ uma API FastAPI; o Elm é responsável pela interface no navegador.
 
 A API Python pode ser executada e testada separadamente. A interface Elm ainda
 aguarda implementação e integração; os comandos completos abaixo dependem dela.
-A preparação da integração está no PR #42. Consulte as issues #28/#29 para o
-aceite no navegador e [o plano da Fase 3](PLANO_FASE3.md) para as dependências.
+Consulte as issues #28/#29 para o aceite no navegador.
 
 ## Pré-requisitos
 
