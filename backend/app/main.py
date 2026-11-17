@@ -1,12 +1,18 @@
-"""Aplicação FastAPI do Kakuro com rota de resolução e tratamento de erros."""
+"""Aplicação FastAPI do Kakuro com rotas de resolução, dica e tratamento de erros."""
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .prolog import PrologInputError, solve_puzzle
-from .schemas import ErrorResponse, SolveRequest, SolveResponse
+from .prolog import PrologInputError, get_hint, solve_puzzle
+from .schemas import (
+    ErrorResponse,
+    HintRequest,
+    HintResponse,
+    SolveRequest,
+    SolveResponse,
+)
 
 app = FastAPI(title="Kakuro API", version="1.0.0")
 
@@ -82,3 +88,14 @@ def solve_endpoint(payload: SolveRequest) -> SolveResponse:
             detail="Não existe solução compatível com o preenchimento atual.",
         )
     return SolveResponse(solution=solution)
+
+
+@app.post(
+    "/api/hint",
+    response_model=HintResponse,
+    response_model_exclude_none=True,
+    responses={422: {"model": ErrorResponse}},
+)
+def hint_endpoint(payload: HintRequest) -> HintResponse:
+    """Retorna uma dica logicamente forçada ou o estado da partida."""
+    return get_hint(payload.puzzle, payload.entries)
