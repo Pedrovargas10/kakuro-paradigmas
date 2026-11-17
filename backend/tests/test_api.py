@@ -1,5 +1,6 @@
-"""Testes da API FastAPI, validações estritas de contrato e ponte Prolog (Fase 1)."""
+"""Testes da API FastAPI, validações estritas de contrato e ponte Prolog (rotas solve e hint)."""
 
+from copy import deepcopy
 from typing import Any
 
 import pytest
@@ -7,7 +8,15 @@ from fastapi.testclient import TestClient
 
 from app import main as main_module
 from app import prolog as prolog_module
-from app.schemas import BlockCell, ClueCell, Entry, PlayableCell, Puzzle
+from app.schemas import (
+    BlockCell,
+    ClueCell,
+    Entry,
+    HintStatusResponse,
+    HintValueResponse,
+    PlayableCell,
+    Puzzle,
+)
 
 client = TestClient(main_module.app, raise_server_exceptions=False)
 
@@ -46,7 +55,8 @@ def make_mini_puzzle_payload() -> dict[str, Any]:
     }
 
 
-def test_validation_errors_return_422_with_string_detail() -> None:
+@pytest.mark.parametrize("endpoint", ["/api/solve", "/api/hint"])
+def test_validation_errors_return_422_with_string_detail(endpoint: str) -> None:
     """Rejeita entradas e tipos inválidos sem coerção silenciosa."""
     base_puzzle = make_mini_puzzle_payload()
 
@@ -80,7 +90,7 @@ def test_validation_errors_return_422_with_string_detail() -> None:
     ]
 
     for payload in invalid_payloads:
-        response = client.post("/api/solve", json=payload)
+        response = client.post(endpoint, json=payload)
         assert response.status_code == 422
         body = response.json()
         assert isinstance(body["detail"], str)
@@ -148,8 +158,10 @@ def test_solve_endpoint_unit(monkeypatch: pytest.MonkeyPatch) -> None:
     assert isinstance(no_sol_res.json()["detail"], str)
 
 
-def test_solve_differentiates_prolog_validation_error_from_internal_error(
+@pytest.mark.parametrize("endpoint", ["/api/solve", "/api/hint"])
+def test_differentiates_prolog_validation_error_from_internal_error(
     monkeypatch: pytest.MonkeyPatch,
+    endpoint: str,
 ) -> None:
     """Garante 422 para erro de validação do Prolog e 500 para erro interno inesperado."""
     payload = {
@@ -162,7 +174,7 @@ def test_solve_differentiates_prolog_validation_error_from_internal_error(
         raise FakePrologError("domain_error(kakuro_entry, 99)")
 
     monkeypatch.setattr(prolog_module.janus, "query_once", raise_validation_error)
-    validation_res = client.post("/api/solve", json=payload)
+    validation_res = client.post(endpoint, json=payload)
     assert validation_res.status_code == 422
     assert (
         validation_res.json()["detail"]
@@ -173,8 +185,92 @@ def test_solve_differentiates_prolog_validation_error_from_internal_error(
         raise FakePrologError("existence_error(procedure, kakuro:solve/3)")
 
     monkeypatch.setattr(prolog_module.janus, "query_once", raise_internal_error)
-    internal_res = client.post("/api/solve", json=payload)
+    internal_res = client.post(endpoint, json=payload)
     assert internal_res.status_code == 500
     assert internal_res.json() == {
         "detail": "Erro interno ao processar a requisição."
     }
+
+
+@pytest.mark.parametrize(
+    ("mock_response", "expected_json"),
+    [
+        (
+            HintValueResponse(kind="hint", row=2, col=2, value=2),
+            {"kind": "hint", "row": 2, "col": 2, "value": 2},
+        ),
+        (HintStatusResponse(kind="complete"), {"kind": "complete"}),
+        (HintStatusResponse(kind="inconsistent"), {"kind": "inconsistent"}),
+        (HintStatusResponse(kind="no_forced_hint"), {"kind": "no_forced_hint"}),
+    ],
+)
+def test_hint_endpoint_unit(
+    monkeypatch: pytest.MonkeyPatch,
+    mock_response: HintValueResponse | HintStatusResponse,
+    expected_json: dict[str, Any],
+) -> None:
+    """Testa os quatro retornos possíveis de `/api/hint` conforme o contrato."""
+    payload = {"puzzle": make_mini_puzzle_payload(), "entries": []}
+    monkeypatch.setattr(main_module, "get_hint", lambda puzzle, entries: mock_response)
+
+    response = client.post("/api/hint", json=payload)
+    assert response.status_code == 200
+    assert response.json() == expected_json
+
+
+def test_solve_and_hint_integration_with_prolog() -> None:
+    """Integração real com `kakuro.pl` via Janus para `/api/solve` e `/api/hint`."""
+    puzzle = make_mini_puzzle_payload()
+
+    solve_res = client.post(
+        "/api/solve",
+        json={"puzzle": deepcopy(puzzle), "entries": [{"row": 1, "col": 1, "value": 3}]},
+    )
+    assert solve_res.status_code == 200
+    assert sorted(
+        (item["row"], item["col"], item["value"])
+        for item in solve_res.json()["solution"]
+    ) == [(1, 1, 3), (1, 2, 4), (2, 1, 1), (2, 2, 2)]
+
+    unsolvable_res = client.post(
+        "/api/solve",
+        json={"puzzle": deepcopy(puzzle), "entries": [{"row": 1, "col": 1, "value": 9}]},
+    )
+    assert unsolvable_res.status_code == 422
+    assert isinstance(unsolvable_res.json()["detail"], str)
+
+    hint_forced = client.post(
+        "/api/hint",
+        json={
+            "puzzle": deepcopy(puzzle),
+            "entries": [
+                {"row": 1, "col": 1, "value": 3},
+                {"row": 1, "col": 2, "value": 4},
+                {"row": 2, "col": 1, "value": 1},
+            ],
+        },
+    )
+    assert hint_forced.status_code == 200
+    assert hint_forced.json() == {"kind": "hint", "row": 2, "col": 2, "value": 2}
+
+    hint_complete = client.post(
+        "/api/hint",
+        json={
+            "puzzle": deepcopy(puzzle),
+            "entries": [
+                {"row": 1, "col": 1, "value": 3},
+                {"row": 1, "col": 2, "value": 4},
+                {"row": 2, "col": 1, "value": 1},
+                {"row": 2, "col": 2, "value": 2},
+            ],
+        },
+    )
+    assert hint_complete.status_code == 200
+    assert hint_complete.json() == {"kind": "complete"}
+
+    hint_inconsistent = client.post(
+        "/api/hint",
+        json={"puzzle": deepcopy(puzzle), "entries": [{"row": 1, "col": 1, "value": 9}]},
+    )
+    assert hint_inconsistent.status_code == 200
+    assert hint_inconsistent.json() == {"kind": "inconsistent"}

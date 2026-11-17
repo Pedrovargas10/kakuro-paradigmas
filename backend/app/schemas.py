@@ -126,12 +126,37 @@ class PuzzleEntriesRequest(BaseModel):
 
 
 SolveRequest = PuzzleEntriesRequest
+HintRequest = PuzzleEntriesRequest
 
 
 class SolveResponse(BaseModel):
     """Resposta da rota POST /api/solve."""
 
     solution: list[Entry]
+
+
+class HintValueResponse(BaseModel):
+    """Resposta da rota POST /api/hint quando há dígito logicamente forçado."""
+
+    kind: Literal["hint"] = "hint"
+    row: StrictInt = Field(
+        ..., ge=0, lt=GRID_SIZE, description="Índice da linha (0 a 5)"
+    )
+    col: StrictInt = Field(
+        ..., ge=0, lt=GRID_SIZE, description="Índice da coluna (0 a 5)"
+    )
+    value: StrictInt = Field(
+        ..., ge=MIN_VALUE, le=MAX_VALUE, description="Dígito forçado (1 a 9)"
+    )
+
+
+class HintStatusResponse(BaseModel):
+    """Resposta da rota POST /api/hint quando não há célula sugerida."""
+
+    kind: Literal["complete", "inconsistent", "no_forced_hint"]
+
+
+HintResponse = HintValueResponse | HintStatusResponse
 
 
 class ErrorResponse(BaseModel):
