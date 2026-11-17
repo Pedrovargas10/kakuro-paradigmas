@@ -12,11 +12,33 @@ dev:
 	backend_done=0; \
 	frontend_done=0; \
 	status=0; \
+	group_alive() { \
+	  ps -A -o pgid= -o stat= | awk -v g="$$1" '$$1 == g && $$2 !~ /^Z/ { found = 1 } END { exit !found }'; \
+	}; \
 	cleanup() { \
 	  trap "" INT TERM; \
 	  for pid in "$$backend_pid" "$$frontend_pid"; do \
-	    if [ -n "$$pid" ] && kill -0 -"$$pid" 2>/dev/null; then \
+	    if [ -n "$$pid" ]; then \
 	      kill -TERM -"$$pid" 2>/dev/null || true; \
+	    fi; \
+	  done; \
+	  tries=0; \
+	  while [ "$$tries" -lt 20 ]; do \
+	    alive=0; \
+	    for pid in "$$backend_pid" "$$frontend_pid"; do \
+	      if [ -n "$$pid" ] && group_alive "$$pid"; then \
+	        alive=1; \
+	      fi; \
+	    done; \
+	    if [ "$$alive" -eq 0 ]; then \
+	      break; \
+	    fi; \
+	    sleep 0.1; \
+	    tries=$$((tries + 1)); \
+	  done; \
+	  for pid in "$$backend_pid" "$$frontend_pid"; do \
+	    if [ -n "$$pid" ] && group_alive "$$pid"; then \
+	      kill -KILL -"$$pid" 2>/dev/null || true; \
 	    fi; \
 	  done; \
 	  if [ "$$backend_done" -eq 0 ] && [ -n "$$backend_pid" ]; then \
@@ -27,18 +49,6 @@ dev:
 	    wait "$$frontend_pid" 2>/dev/null || true; \
 	    frontend_done=1; \
 	  fi; \
-	  for pid in "$$backend_pid" "$$frontend_pid"; do \
-	    if [ -n "$$pid" ]; then \
-	      tries=0; \
-	      while kill -0 -"$$pid" 2>/dev/null && [ "$$tries" -lt 20 ]; do \
-	        sleep 0.1; \
-	        tries=$$((tries + 1)); \
-	      done; \
-	      if kill -0 -"$$pid" 2>/dev/null; then \
-	        kill -KILL -"$$pid" 2>/dev/null || true; \
-	      fi; \
-	    fi; \
-	  done; \
 	}; \
 	trap 'cleanup; exit 130' INT; \
 	trap 'cleanup; exit 143' TERM; \
