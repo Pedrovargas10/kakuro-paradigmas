@@ -63,7 +63,9 @@ class GenerationUnavailableError(RuntimeError):
 
 def _is_validation_prolog_error(exc: Exception) -> bool:
     """Identifica exceções explícitas de validação do domínio vindas do Prolog."""
-    message = str(exc).lower()
+    # A mensagem legível do Janus não preserva nomes como domain_error/2.
+    term = getattr(exc, "term", None)
+    message = (repr(term) if term is not None else str(exc)).lower()
     if any(marker in message for marker in _INTERNAL_PROLOG_ERROR_MARKERS):
         return False
     return any(marker in message for marker in _VALIDATION_PROLOG_ERROR_MARKERS)
