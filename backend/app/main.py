@@ -112,7 +112,11 @@ async def generation_unavailable_handler(
 )
 def generate_endpoint(payload: GenerateRequest) -> GenerateResponse:
     """Solicita um puzzle ao Prolog sem incluir a solução na resposta."""
-    return GenerateResponse(puzzle=generate_puzzle())
+    try:
+        return GenerateResponse(puzzle=generate_puzzle())
+    except PrologInputError as exc:
+        # O cliente não fornece puzzle à geração; sua rejeição é falha do motor.
+        raise RuntimeError("O motor Prolog rejeitou os dados da geração.") from exc
 
 
 @app.post(

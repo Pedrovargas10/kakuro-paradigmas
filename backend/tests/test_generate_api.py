@@ -57,6 +57,16 @@ def test_generate_internal_error_does_not_leak_details(monkeypatch):
     assert response.json() == {"detail": "Erro interno ao processar a requisição."}
 
 
+def test_generate_domain_error_is_internal(monkeypatch):
+    def fail(*args):
+        raise prolog.PrologInputError("Tabuleiro inválido criado pelo gerador")
+
+    monkeypatch.setattr(prolog, "query_prolog", fail)
+    response = client.post("/api/generate", json={})
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Erro interno ao processar a requisição."}
+
+
 def test_invalid_engine_response_is_500_not_422(monkeypatch):
     monkeypatch.setattr(prolog, "query_prolog", lambda *args: {"truth": True, "Puzzle": [["white"]]})
     response = client.post("/api/generate", json={})
