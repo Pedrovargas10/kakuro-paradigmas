@@ -7,11 +7,21 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .prolog import PrologInputError, check_puzzle, ensure_prolog_loaded, get_hint, solve_puzzle
+from .prolog import (
+    GenerationUnavailableError,
+    PrologInputError,
+    check_puzzle,
+    ensure_prolog_loaded,
+    generate_puzzle,
+    get_hint,
+    solve_puzzle,
+)
 from .schemas import (
     CheckRequest,
     CheckResponse,
     ErrorResponse,
+    GenerateRequest,
+    GenerateResponse,
     HintRequest,
     HintResponse,
     SolveRequest,
@@ -82,6 +92,27 @@ async def unhandled_exception_handler(
         status_code=500,
         content={"detail": "Erro interno ao processar a requisição."},
     )
+
+
+@app.exception_handler(GenerationUnavailableError)
+async def generation_unavailable_handler(
+    request: Request, exc: GenerationUnavailableError
+) -> JSONResponse:
+    return JSONResponse(status_code=503, content={"detail": str(exc)})
+
+
+@app.post(
+    "/api/generate",
+    response_model=GenerateResponse,
+    responses={
+        422: {"model": ErrorResponse},
+        503: {"model": ErrorResponse},
+        500: {"model": ErrorResponse},
+    },
+)
+def generate_endpoint(payload: GenerateRequest) -> GenerateResponse:
+    """Solicita um puzzle ao Prolog sem incluir a solução na resposta."""
+    return GenerateResponse(puzzle=generate_puzzle())
 
 
 @app.post(

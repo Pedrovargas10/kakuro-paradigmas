@@ -134,6 +134,14 @@ class CheckResponse(BaseModel):
     state: Literal["incomplete", "inconsistent", "solved"]
 
 
+class GenerateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class GenerateResponse(BaseModel):
+    puzzle: Puzzle
+
+
 class SolveResponse(BaseModel):
     """Resposta da rota POST /api/solve."""
 
