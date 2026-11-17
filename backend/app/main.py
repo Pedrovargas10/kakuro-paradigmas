@@ -1,11 +1,13 @@
 """Aplicação FastAPI do Kakuro com rotas de resolução, dica e tratamento de erros."""
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .prolog import PrologInputError, get_hint, solve_puzzle
+from .prolog import PrologInputError, ensure_prolog_loaded, get_hint, solve_puzzle
 from .schemas import (
     ErrorResponse,
     HintRequest,
@@ -14,7 +16,13 @@ from .schemas import (
     SolveResponse,
 )
 
-app = FastAPI(title="Kakuro API", version="1.0.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    ensure_prolog_loaded()
+    yield
+
+
+app = FastAPI(title="Kakuro API", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

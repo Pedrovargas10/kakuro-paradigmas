@@ -19,6 +19,7 @@ from .schemas import (
 
 PROLOG_DIR = Path(__file__).resolve().parent.parent / "prolog"
 KAKURO_PL = PROLOG_DIR / "kakuro.pl"
+GENERATOR_PL = PROLOG_DIR / "generator.pl"
 
 _load_lock = Lock()
 _prolog_loaded = False
@@ -62,18 +63,18 @@ def _is_validation_prolog_error(exc: Exception) -> bool:
 
 
 def ensure_prolog_loaded() -> None:
-    """Carrega o módulo Prolog `kakuro.pl` uma única vez na sessão do Janus."""
+    """Carrega os módulos Prolog compartilhados uma única vez por processo."""
     global _prolog_loaded
     if _prolog_loaded:
         return
     with _load_lock:
         if _prolog_loaded:
             return
-        if not KAKURO_PL.exists():
-            raise FileNotFoundError(
-                f"Arquivo Prolog não encontrado: {KAKURO_PL}"
-            )
-        janus.consult(str(KAKURO_PL))
+        for source in (KAKURO_PL, GENERATOR_PL):
+            if not source.is_file():
+                raise FileNotFoundError(f"Arquivo Prolog não encontrado: {source}")
+        for source in (KAKURO_PL, GENERATOR_PL):
+            janus.consult(str(source))
         _prolog_loaded = True
 
 
