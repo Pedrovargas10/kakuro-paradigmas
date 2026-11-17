@@ -105,4 +105,5 @@ test-backend:
 test: test-prolog test-backend
 
 validar:
+	@test -s scripts/validar_entrega.py || { echo "Validador oficial ausente ou vazio: obter o arquivo do professor conforme issue #9." >&2; exit 1; }
 	uv run scripts/validar_entrega.py
