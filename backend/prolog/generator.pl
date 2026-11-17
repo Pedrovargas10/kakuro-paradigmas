@@ -1,5 +1,6 @@
+:- encoding(utf8).
 :- module(generator, [generate/1, generate/2, generate_with_solution/2,
-                      print_puzzle/1]).
+                      print_puzzle/1, attempts_average/2]).
 
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
@@ -32,13 +33,24 @@ generate_with_solution(Puzzle, Solution) :-
 
 %  sem solução única: tenta outros dígitos (até 20) e depois outra máscara
 try_generate(Puzzle, Solution) :-
+    nb_setval(gen_attempts, 0),
     repeat,
     random_mask(Mask),
     between(1, 20, _),
     random_fill(Mask, Values),
     make_puzzle(Mask, Values, Puzzle, Solution),
+    nb_getval(gen_attempts, N0),
+    N1 is N0 + 1,
+    nb_setval(gen_attempts, N1),
     solution_count(Puzzle, [], 1),
     !.
+
+%  mede a média de tentativas por puzzle gerado (sementes 1..N)
+attempts_average(N, Media) :-
+    numlist(1, N, Seeds),
+    maplist([S, A]>>( generate(S, _), nb_getval(gen_attempts, A) ), Seeds, As),
+    sum_list(As, Total),
+    Media is Total / N.
 
 
 
