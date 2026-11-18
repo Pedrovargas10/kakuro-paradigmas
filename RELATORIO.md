@@ -262,8 +262,12 @@ reexecução sobre a `main` `test_generate_with_real_prolog_excludes_solution`
 retornou HTTP 503 por esgotamento do gerador Prolog (82/83 no `pytest`) e
 `make test-prolog` executou 40 testes sem duplicação (39 passaram e
 `generator:varias_geracoes` falhou neste ambiente, conforme #20/#22). Essa medição
-é separada da amostra anterior de Pedro. A conferência em máquina limpa e no
-navegador continua pendente.
+é separada da amostra anterior de Pedro. Em 18/11/2026, na revisão `f9da1bf`, os 113 testes Python passaram com
+Janus real. O verificador HTTP completou dez partidas, com geração média de
+3,374 s e máxima de 7,312 s. Na conferência do navegador houve HTTP 503 no
+quinto novo jogo. No ambiente limpo do PR #58, a instalação e a inicialização
+passaram e o plunit registrou 39/40, com falha em `generator:varias_geracoes`.
+O aceite do fluxo no navegador (#29) e o validador oficial (#9) seguem pendentes.
 
 ## 9. Limitações e problemas conhecidos
 
@@ -333,7 +337,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
 | Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
-| Codex (OpenAI), Claude (Anthropic) e Antigravity (Caio — @CaioSoandrd) | Revisão dos PRs #35–#40, apoio em código/ajustes (Makefile, rotas solve/hint e verificação), ampliação do verificador HTTP (#50), suíte de fixtures (#55) e documentação de integração/entrega | Execução local de pytest com Janus real (83 baseline e 104 no PR #55; 82/83 em reteste por 503 do gerador), `make test-prolog` (39/40 pós-#49) e dez partidas HTTP; todas as alterações foram revisadas por Caio antes de cada envio. O fluxo Elm, máquina limpa e validador oficial permanecem pendentes. |
+| Codex (OpenAI), Claude (Anthropic) e Antigravity (Caio — @CaioSoandrd) | Revisão dos PRs #35–#40, apoio em código/ajustes (Makefile, rotas solve/hint e verificação), ampliação do verificador HTTP (#50), suíte de fixtures (#55) e documentação de integração/entrega | Execução local de pytest com Janus real (83 baseline e 104 no PR #55; 82/83 em reteste por 503 do gerador), `make test-prolog` (39/40 pós-#49) e dez partidas HTTP; todas as alterações foram revisadas por Caio antes de cada envio. O ensaio posterior em contêiner limpo e os resultados do fluxo integrado estão na seção 8. |
 | Claude Code (Anthropic, modelo Claude Opus 5.5) | Geração e refatoração do frontend Elm (`frontend/src/`: `Kakuro.elm`, `Api.elm`, `Main.elm`, `View/`, `style.css`), dos testes elm-test (`frontend/tests/`), de ajustes de infraestrutura do frontend e da documentação da branch `feat/elm-interface` (issues #17 a #28), sob direção de @vitorfleonardo | `elm make` e `elm-format --validate`; 43 testes elm-test do domínio e da API; verificação dos encoders e decoders contra o backend real; roteiro automatizado no navegador (Edge headless) cobrindo teclado, controles, dica, resolver, 10 puzzles seguidos e queda do backend. Revisão humana do PR pendente. |
 
 ## 12. Apresentação oral
