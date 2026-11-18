@@ -61,10 +61,10 @@ puzzle_no_solution(Puzzle) :-
 % Puzzle 6×6 com mais casas brancas
 puzzle_full(Puzzle) :-
     Puzzle = [
-        ["block", [0,18],  [0,18],  "block", [0,7],   [0,4]],
-        [[16,0], "white", "white", [8,0],   "white", "white"],
+        ["block", [0,17],  [0,18],  "block", [0,7],   [0,4]],
+        [[16,0], "white", "white", [8,7],   "white", "white"],
         [[21,0], "white", "white", "white", "white", "white"],
-        [[6,0],  "white", "white", "block", "block", "block"],
+        ["block", [8,0],  "white", "white", "block", "block"],
         ["block", "block", "block", "block", "block", "block"],
         ["block", "block", "block", "block", "block", "block"]
     ].
@@ -287,6 +287,51 @@ test(solution_count_rejects_entry_on_block, [throws(error(domain_error(kakuro_en
 test(check_rejects_out_of_range_entry, [throws(error(domain_error(kakuro_entry, [1,1,10]), _))]) :-
     puzzle_mini(P),
     check(P, [[1,1,10]], _).
+
+test(check_rejects_out_of_board_entry, [throws(error(domain_error(kakuro_entry, [6,1,5]), _))]) :-
+    puzzle_mini(P),
+    check(P, [[6,1,5]], _).
+
+test(check_rejects_duplicate_entry, [throws(error(domain_error(kakuro_duplicate_entry, [1,1,3]), _))]) :-
+    puzzle_mini(P),
+    check(P, [[1,1,3],[1,1,3]], _).
+
+test(hint_rejects_duplicate_entry_different_values, [throws(error(domain_error(kakuro_duplicate_entry, [1,1,4]), _))]) :-
+    puzzle_mini(P),
+    hint(P, [[1,1,3],[1,1,4]], _).
+
+test(check_rejects_single_cell_horizontal_sequence, [throws(error(domain_error(kakuro_sequence, _), _))]) :-
+    P = [
+        ["block", [0,4],   "block", "block", "block", "block"],
+        [[4,0],   "white", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"]
+    ],
+    check(P, [], _).
+
+test(check_rejects_single_cell_vertical_sequence, [throws(error(domain_error(kakuro_sequence, _), _))]) :-
+    P = [
+        ["block", [0,4],   [0,6],   "block", "block", "block"],
+        [[7,0],   "white", "white", "block", "block", "block"],
+        [[3,0],   "white", "white", "block", "block", "block"],
+        ["block", "block", "block", "block", [0,5],   "block"],
+        ["block", "block", "block", "block", "white", "block"],
+        ["block", "block", "block", "block", "block", "block"]
+    ],
+    check(P, [], _).
+
+test(check_rejects_white_without_horizontal_and_vertical_sequence, [throws(error(domain_error(kakuro_white_cell, pos(2,3)), _))]) :-
+    P = [
+        ["block", [0,18],  [0,18],  "block", [0,7],   [0,4]],
+        [[16,0], "white", "white", [8,0],   "white", "white"],
+        [[21,0], "white", "white", "white", "white", "white"],
+        [[6,0],  "white", "white", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"]
+    ],
+    check(P, [], _).
 
 :- end_tests(format_errors).
 

@@ -1,4 +1,4 @@
-﻿:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
+:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
 
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
@@ -48,10 +48,13 @@ head_tail([H|T], H, T).
 %  Horizontal: pista = A de clue(A,_) com A > 0, seguida de whites
 %  Vertical:   pista = D de clue(_,D) com D > 0, seguida de whites na coluna
 sequences(Puzzle, Seqs) :-
+    sequences(Puzzle, HSeqs, VSeqs),
+    append(HSeqs, VSeqs, Seqs).
+
+sequences(Puzzle, HSeqs, VSeqs) :-
     h_seqs(Puzzle, 0, HSeqs),
     transp(Puzzle, TPuzzle),
-    v_seqs(TPuzzle, 0, VSeqs),
-    append(HSeqs, VSeqs, Seqs).
+    v_seqs(TPuzzle, 0, VSeqs).
 
 %horizontais:
 h_seqs([], _, []).
@@ -66,9 +69,11 @@ row_seqs([clue(A,_)|Rest], R, C, Seqs) :-
     A > 0, !,
     C1 is C + 1,
     collect_whites_h(Rest, R, C1, Cells, Remaining, NextC),
-    (   Cells = [_,_|_]                     % ≥ 2 casas
+    length(Cells, Len),
+    (   between(2, 5, Len)
     ->  Seqs = [seq(A, Cells)|More]
-    ;   Seqs = More                          % sequência degenerada: ignora
+    ;   throw(error(domain_error(kakuro_sequence, seq(horizontal, R, C, A, Cells)),
+                    context(row_seqs/4, 'sequência horizontal deve ter entre 2 e 5 casas')))
     ),
     row_seqs(Remaining, R, NextC, More).
 row_seqs([_|Rest], R, C, Seqs) :-
@@ -96,9 +101,11 @@ col_seqs([clue(_,D)|Rest], C, R, Seqs) :-
     D > 0, !,
     R1 is R + 1,
     collect_whites_v(Rest, C, R1, Cells, Remaining, NextR),
-    (   Cells = [_,_|_]
+    length(Cells, Len),
+    (   between(2, 5, Len)
     ->  Seqs = [seq(D, Cells)|More]
-    ;   Seqs = More
+    ;   throw(error(domain_error(kakuro_sequence, seq(vertical, R, C, D, Cells)),
+                    context(col_seqs/4, 'sequência vertical deve ter entre 2 e 5 casas')))
     ),
     col_seqs(Remaining, C, NextR, More).
 col_seqs([_|Rest], C, R, Seqs) :-
@@ -140,11 +147,28 @@ white_pos_row([_|Rest], R, C, More) :-
 setup(Puzzle, Entradas, VarMap, AllVars) :-
     normalize_puzzle(Puzzle, NPuzzle),
     white_positions(NPuzzle, Positions),
+    sequences(NPuzzle, HSeqs, VSeqs),
+    validate_white_coverage(Positions, HSeqs, VSeqs),
+    append(HSeqs, VSeqs, Seqs),
     make_varmap(Positions, VarMap, AllVars),
     AllVars ins 1..9,
     apply_entries(Entradas, VarMap),
-    sequences(NPuzzle, Seqs),
     post_constraints(Seqs, VarMap).
+
+validate_white_coverage(Positions, HSeqs, VSeqs) :-
+    seq_positions(HSeqs, HPos),
+    seq_positions(VSeqs, VPos),
+    forall(member(Pos, Positions),
+           (   memberchk(Pos, HPos),
+               memberchk(Pos, VPos)
+           ->  true
+           ;   throw(error(domain_error(kakuro_white_cell, Pos),
+                           context(validate_white_coverage/3,
+                                   'casa branca deve pertencer a uma sequência horizontal e uma vertical')))
+           )).
+
+seq_positions(Seqs, Positions) :-
+    findall(Pos, (member(seq(_, Cells), Seqs), member(Pos, Cells)), Positions).
 
 make_varmap([], [], []).
 make_varmap([P|Ps], [P-V|Map], [V|Vs]) :-
@@ -153,15 +177,27 @@ make_varmap([P|Ps], [P-V|Map], [V|Vs]) :-
 lookup(Pos, [Pos-V|_], V) :- !.
 lookup(Pos, [_|Rest], V)  :- lookup(Pos, Rest, V).
 
-apply_entries([], _).
-apply_entries([Entry|Es], Map) :-
+apply_entries(Entradas, Map) :-
+    (   is_list(Entradas)
+    ->  apply_entries(Entradas, Map, [])
+    ;   throw(error(domain_error(kakuro_entries, Entradas),
+                    context(apply_entries/2, 'entradas devem ser uma lista')))
+    ).
+
+apply_entries([], _, _).
+apply_entries([Entry|Es], Map, Seen) :-
     (   Entry = [L, C, Val],
         integer(L), integer(C), integer(Val),
         between(1, 9, Val),
         lookup(pos(L, C), Map, Var)
-    ->  Var #= Val,
-        apply_entries(Es, Map)
-    ;   throw(error(domain_error(kakuro_entry, Entry), context(apply_entries/2, 'entrada inválida ou fora de casa branca')))
+    ->  (   memberchk(pos(L, C), Seen)
+        ->  throw(error(domain_error(kakuro_duplicate_entry, Entry),
+                        context(apply_entries/3, 'posição duplicada nas entradas')))
+        ;   Var #= Val,
+            apply_entries(Es, Map, [pos(L, C)|Seen])
+        )
+    ;   throw(error(domain_error(kakuro_entry, Entry),
+                    context(apply_entries/3, 'entrada inválida ou fora de casa branca')))
     ).
 
 post_constraints([], _).
