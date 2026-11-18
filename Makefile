@@ -16,9 +16,8 @@ test-integration:
 
 RUN_PGROUP := python3 -c 'import os,sys; os.setpgid(0,0); os.execvp(sys.argv[1],sys.argv[1:])'
 
-install:
-	cd backend && uv sync
-	cd frontend && npm install
+install: install-backend
+	cd frontend && npm ci
 
 dev:
 	@backend_pid=""; \
