@@ -250,6 +250,21 @@ gerar, verificar, resolver, dica e conclusão. Neste ambiente (Python 3.12.3,
 SWI-Prolog 10.0.2 e uv 0.8.14), a geração levou em média 1,985 s e no máximo
 6,166 s. É uma amostra local, não uma garantia de desempenho em outras máquinas.
 
+Na preparação de Caio para a Fase 3 (PRs #50 e #51, amostra pré-#49), `make test`
+passou 83 testes Python e 21 testes Prolog. O verificador ampliado testa entradas
+incompatíveis, 422 com mensagem legível, preservação das entradas parciais e
+nova resolução válida após rejeições. Dez partidas passaram com geração média
+de 1,861 s e máxima de 8,659 s, usando Python 3.12.3, SWI-Prolog 9.2.9,
+uv 0.13.9 e Janus 1.5.3. Após a entrada dos PRs #30, #42, #46, #49, #50, #51 e
+#52 na `main`, os 21 casos determinísticos de fixtures de `solve`/`hint` (PR #55)
+passaram integralmente (104/104 no `pytest` nessa execução), enquanto em
+reexecução sobre a `main` `test_generate_with_real_prolog_excludes_solution`
+retornou HTTP 503 por esgotamento do gerador Prolog (82/83 no `pytest`) e
+`make test-prolog` executou 40 testes sem duplicação (39 passaram e
+`generator:varias_geracoes` falhou neste ambiente, conforme #20/#22). Essa medição
+é separada da amostra anterior de Pedro. A conferência em máquina limpa e no
+navegador continua pendente.
+
 ## 9. Limitações e problemas conhecidos
 
 <!--
@@ -275,8 +290,8 @@ teclado, aparência ou recuperação de falhas no navegador; esses casos estão 
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. Esta implementação foi produzida com assistência de IA e revisão técnica independente, conforme seção 11; a revisão humana permanece necessária antes de integrar os PRs. |
-| [Nome]     | [...] |
+| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
+| Caio (@CaioSoandrd) | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile e alvos do backend (#30/#51), guarda do validador (#46), README/.gitignore (#52), ampliação do verificador HTTP (#50), suíte solve/hint com fixtures (#55), revisão assistida dos PRs Python de Pedro e documentação de integração (#42). Evidências: PRs #30, #33, #34, #42, #46, #50, #51, #52 e #55. |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
 | [Nome]     | [...] |
@@ -307,7 +322,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** [nenhum | pontual | auxiliar | intensivo]
+- **Faixa de uso no código:** [auxiliar]
   <!--
     nenhum: não usou. pontual: autocompletar, dúvidas, explicar erros.
     auxiliar: trechos gerados pela IA e revisados pelo grupo. intensivo: a
@@ -317,8 +332,8 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
-| Codex (OpenAI) e agente revisor Antigravity no Orca | Geração de código, testes e documentação da parte Python de Pedro; revisão técnica independente antes de publicar cada PR | Execução de pytest, Janus/Prolog reais e servidor HTTP; pareceres por commit do agente revisor. Aprovação humana e merge não foram executados pelos agentes nesta entrega. |
-| [Nome ou "nenhuma"] | [...] | [...] |
+| Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
+| Codex (OpenAI), Claude (Anthropic) e Antigravity (Caio — @CaioSoandrd) | Revisão dos PRs #35–#40, apoio em código/ajustes (Makefile, rotas solve/hint e verificação), ampliação do verificador HTTP (#50), suíte de fixtures (#55) e documentação de integração/entrega | Execução local de pytest com Janus real (83 baseline e 104 no PR #55; 82/83 em reteste por 503 do gerador), `make test-prolog` (39/40 pós-#49) e dez partidas HTTP; todas as alterações foram revisadas por Caio antes de cada envio. O fluxo Elm, máquina limpa e validador oficial permanecem pendentes. |
 
 ## 12. Apresentação oral
 
