@@ -2,10 +2,10 @@ import { defineConfig } from 'vite'
 import elmPlugin from 'vite-plugin-elm'
 
 export default defineConfig({
-  plugins: [elmPlugin()],
+  plugins: [elmPlugin({ debug: false })],
   server: {
     proxy: {
-      '/api': 'http://localhost:8000',
+      '/api': 'http://127.0.0.1:8000',
     },
   },
 })

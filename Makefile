@@ -1,4 +1,4 @@
-.PHONY: install install-backend dev dev-backend test test-prolog test-backend test-integration validar
+.PHONY: install install-backend dev dev-backend test test-prolog test-backend test-frontend test-integration validar
 .DEFAULT_GOAL := install
 
 API_URL ?= http://127.0.0.1:8000
@@ -102,7 +102,10 @@ test-prolog:
 test-backend:
 	cd backend && uv run pytest
 
-test: test-prolog test-backend
+test-frontend:
+	cd frontend && npm test
+
+test: test-prolog test-backend test-frontend
 
 validar:
 	@test -s scripts/validar_entrega.py || { echo "Validador oficial ausente ou vazio: obter o arquivo do professor conforme issue #9." >&2; exit 1; }
