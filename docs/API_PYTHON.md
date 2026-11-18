@@ -62,13 +62,44 @@ O gerador existente usa `generator:generate/1` e já limita sua busca a 10 segun
 A ponte mantém esse limite e converte falha/timeout em 503. O Python não usa
 `generate_with_solution/2`, catálogo fixo ou algoritmo próprio de geração.
 
-## Dependências e limites desta entrega
+## Execução isolada e verificação HTTP
 
-- O alvo `make test-backend` está no PR #30 de Caio; até sua integração, executar
-  `uv run --locked pytest` diretamente em `backend/`.
-- Os fixtures compartilhados dependem da issue #14. Os testes Python usam uma
-  transcrição identificada do puzzle fixo já presente nos testes Prolog.
-- Validação estrutural e correções do motor Prolog continuam nas issues #12,
-  #13 e #21. Esta entrega não declara essas tarefas concluídas.
-- A documentação e a verificação acima cobrem a API. A infraestrutura Elm e o
-  fluxo visual permanecem nas tarefas da equipe de frontend.
+Na raiz do repositório:
+
+```sh
+make install-backend
+make dev-backend
+```
+
+Em outro terminal, com o servidor já iniciado:
+
+```sh
+make test-integration
+make test-integration API_URL=http://127.0.0.1:8001 PARTIDAS=2
+```
+
+O alvo não inicia nem encerra servidores. Cada partida confere o fluxo de jogo,
+a preservação das entradas parciais e uma resolução válida depois de rejeitar
+entradas incompatíveis, duplicadas, fora de 1 a 9 ou fora da grade. Também
+confere a rejeição de campos extras na geração. Os erros devem trazer `detail`
+legível, e qualquer falha encerra o verificador com status diferente de zero.
+Os cenários controlados de falha interna (500) e de geração (503) são cobertos
+pela suíte pytest.
+
+Se a recarga automática falhar com `Too many open files`, executar:
+
+```sh
+WATCHFILES_FORCE_POLLING=true make dev-backend
+```
+
+## Fixtures compartilhados e limites
+
+- Os três puzzles e suas soluções estão em `docs/fixtures/`, nos formatos JSON
+  e Prolog. O arquivo JSON do puzzle contém a matriz; para enviar à API,
+  envolva essa matriz em `{"puzzle": {"cells": [...]}, "entries": []}`.
+- `make test-backend` executa a suíte Python e `make test-prolog`, a suíte Prolog.
+- A validação estrutural restante do motor continua na issue #12.
+- Os testes HTTP não substituem teclado, controles, preservação do estado após
+  falha de rede e demais critérios de navegador das issues #28/#29.
+- `make validar` rejeita o validador ausente ou vazio. Ainda é necessário obter
+  o arquivo oficial do professor, conforme a issue #9.
