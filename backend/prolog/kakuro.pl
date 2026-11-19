@@ -256,12 +256,14 @@ check(Puzzle, Entradas, Estado) :-
 %  9. hint(+Puzzle, +Entradas, -Resultado)
 
 hint(Puzzle, Entradas, Resultado) :-
-    (   setup(Puzzle, Entradas, VarMap, _)
+    (   setup(Puzzle, Entradas, VarMap, Vars)
     ->  (   all_filled(VarMap, Entradas)
         ->  Resultado = "complete"
-        ;   once(solve(Puzzle, Entradas, Candidata))
-        ->  filled_set(Entradas, Filled),
-            first_forced(Puzzle, Entradas, Filled, Candidata, Resultado)
+        ;   copy_term(VarMap-Vars, CandMap-CandVars),
+            once(labeling([ff], CandVars))
+        ->  maplist(pair_to_entry, CandMap, Candidata),
+            filled_set(Entradas, Filled),
+            first_forced(VarMap, Vars, Filled, Candidata, Resultado)
         ;   Resultado = "inconsistent"
         )
     ;   Resultado = "inconsistent"
@@ -269,16 +271,15 @@ hint(Puzzle, Entradas, Resultado) :-
 
 %  Percorre a solução candidata e devolve a primeira casa vazia forçada.
 first_forced(_, _, _, [], "no_forced_hint").
-first_forced(Puzzle, Entradas, Filled, [[R,C,V]|Rest], Resultado) :-
+first_forced(VarMap, Vars, Filled, [[R,C,V]|Rest], Resultado) :-
     (   \+ memberchk(pos(R,C), Filled),
-        \+ alternative_exists(Puzzle, Entradas, R, C, V)
+        \+ alternative_exists(VarMap, Vars, R, C, V)
     ->  Resultado = ["hint", R, C, V]
-    ;   first_forced(Puzzle, Entradas, Filled, Rest, Resultado)
+    ;   first_forced(VarMap, Vars, Filled, Rest, Resultado)
     ).
 
 %  Existe solução em que a casa (R,C) tem valor diferente de V?
-alternative_exists(Puzzle, Entradas, R, C, V) :-
-    setup(Puzzle, Entradas, VarMap, Vars),
+alternative_exists(VarMap, Vars, R, C, V) :-
     lookup(pos(R,C), VarMap, X),
     X #\= V,
     once(labeling([ff], Vars)).
