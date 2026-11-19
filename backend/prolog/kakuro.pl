@@ -53,73 +53,54 @@ sequences(Puzzle, Seqs) :-
     append(HSeqs, VSeqs, Seqs).
 
 sequences(Puzzle, HSeqs, VSeqs) :-
-    h_seqs(Puzzle, 0, HSeqs),
+    dir_seqs(horizontal, Puzzle, 0, HSeqs),
     transp(Puzzle, TPuzzle),
-    v_seqs(TPuzzle, 0, VSeqs).
+    dir_seqs(vertical, TPuzzle, 0, VSeqs).
 
-%horizontais:
-h_seqs([], _, []).
-h_seqs([Row|Rows], R, Seqs) :-
-    row_seqs(Row, R, 0, S1),
-    R1 is R + 1,
-    h_seqs(Rows, R1, S2),
+dir_seqs(_, [], _, []).
+dir_seqs(Dir, [Line|Lines], Idx, Seqs) :-
+    line_seqs(Dir, Line, Idx, 0, S1),
+    Idx1 is Idx + 1,
+    dir_seqs(Dir, Lines, Idx1, S2),
     append(S1, S2, Seqs).
 
-row_seqs([], _, _, []).
-row_seqs([clue(A,_)|Rest], R, C, Seqs) :-
-    A > 0, !,
-    C1 is C + 1,
-    collect_whites_h(Rest, R, C1, Cells, Remaining, NextC),
+line_seqs(_, [], _, _, []).
+line_seqs(Dir, [Cell|Rest], LineIdx, PosIdx, Seqs) :-
+    clue_value(Dir, Cell, Clue),
+    Clue > 0, !,
+    Pos1 is PosIdx + 1,
+    collect_whites(Dir, Rest, LineIdx, Pos1, Cells, Remaining, NextPos),
     length(Cells, Len),
     (   between(2, 5, Len)
-    ->  Seqs = [seq(A, Cells)|More]
-    ;   throw(error(domain_error(kakuro_sequence, seq(horizontal, R, C, A, Cells)),
-                    context(row_seqs/4, 'sequência horizontal deve ter entre 2 e 5 casas')))
+    ->  Seqs = [seq(Clue, Cells)|More]
+    ;   seq_error_info(Dir, LineIdx, PosIdx, Clue, Cells, ErrTerm, ErrMsg),
+        throw(error(domain_error(kakuro_sequence, ErrTerm),
+                    context(line_seqs/5, ErrMsg)))
     ),
-    row_seqs(Remaining, R, NextC, More).
-row_seqs([_|Rest], R, C, Seqs) :-
-    C1 is C + 1,
-    row_seqs(Rest, R, C1, Seqs).
+    line_seqs(Dir, Remaining, LineIdx, NextPos, More).
+line_seqs(Dir, [_|Rest], LineIdx, PosIdx, Seqs) :-
+    Pos1 is PosIdx + 1,
+    line_seqs(Dir, Rest, LineIdx, Pos1, Seqs).
 
-collect_whites_h([], _, C, [], [], C).
-collect_whites_h([white|Rest], R, C, [pos(R,C)|Cells], Rem, NC) :-
+collect_whites(_, [], _, PosIdx, [], [], PosIdx).
+collect_whites(Dir, [white|Rest], LineIdx, PosIdx, [Pos|Cells], Rem, NextPos) :-
     !,
-    C1 is C + 1,
-    collect_whites_h(Rest, R, C1, Cells, Rem, NC).
-collect_whites_h([Cell|Rest], _, C, [], [Cell|Rest], C) :-
+    make_pos(Dir, LineIdx, PosIdx, Pos),
+    Pos1 is PosIdx + 1,
+    collect_whites(Dir, Rest, LineIdx, Pos1, Cells, Rem, NextPos).
+collect_whites(_, [Cell|Rest], _, PosIdx, [], [Cell|Rest], PosIdx) :-
     Cell \= white.
 
-% verticais:
-v_seqs([], _, []).
-v_seqs([Col|Cols], C, Seqs) :-
-    col_seqs(Col, C, 0, S1),
-    C1 is C + 1,
-    v_seqs(Cols, C1, S2),
-    append(S1, S2, Seqs).
+clue_value(horizontal, clue(A, _), A).
+clue_value(vertical,   clue(_, D), D).
 
-col_seqs([], _, _, []).
-col_seqs([clue(_,D)|Rest], C, R, Seqs) :-
-    D > 0, !,
-    R1 is R + 1,
-    collect_whites_v(Rest, C, R1, Cells, Remaining, NextR),
-    length(Cells, Len),
-    (   between(2, 5, Len)
-    ->  Seqs = [seq(D, Cells)|More]
-    ;   throw(error(domain_error(kakuro_sequence, seq(vertical, R, C, D, Cells)),
-                    context(col_seqs/4, 'sequência vertical deve ter entre 2 e 5 casas')))
-    ),
-    col_seqs(Remaining, C, NextR, More).
-col_seqs([_|Rest], C, R, Seqs) :-
-    R1 is R + 1,
-    col_seqs(Rest, C, R1, Seqs).
+make_pos(horizontal, R, C, pos(R, C)).
+make_pos(vertical,   C, R, pos(R, C)).
 
-collect_whites_v([], _, R, [], [], R).
-collect_whites_v([white|Rest], C, R, [pos(R,C)|Cells], Rem, NR) :-
-    !,
-    R1 is R + 1,
-    collect_whites_v(Rest, C, R1, Cells, Rem, NR).
-collect_whites_v([Cell|Rest], _, R, [], [Cell|Rest], R) :-
-    Cell \= white.
+seq_error_info(horizontal, R, C, A, Cells, seq(horizontal, R, C, A, Cells),
+               'sequência horizontal deve ter entre 2 e 5 casas').
+seq_error_info(vertical,   C, R, D, Cells, seq(vertical,   R, C, D, Cells),
+               'sequência vertical deve ter entre 2 e 5 casas').
 
 
 %  4. Coleta das posições brancas
