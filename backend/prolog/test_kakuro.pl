@@ -333,6 +333,28 @@ test(check_rejects_white_without_horizontal_and_vertical_sequence, [throws(error
     ],
     check(P, [], _).
 
+test(check_rejects_zero_clue, [throws(error(domain_error(kakuro_cell, [0,0]), _))]) :-
+    P = [
+        [[0,0],   [0,4],   [0,6],   "block", "block", "block"],
+        [[7,0],   "white", "white", "block", "block", "block"],
+        [[3,0],   "white", "white", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"]
+    ],
+    check(P, [], _).
+
+test(check_rejects_clue_above_max_sum, [throws(error(domain_error(kakuro_cell, [36,0]), _))]) :-
+    P = [
+        ["block", [0,4],   [0,6],   "block", "block", "block"],
+        [[36,0],  "white", "white", "block", "block", "block"],
+        [[3,0],   "white", "white", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"],
+        ["block", "block", "block", "block", "block", "block"]
+    ],
+    check(P, [], _).
+
 :- end_tests(format_errors).
 
 :- begin_tests(fixtures).

@@ -17,8 +17,9 @@ normalize_cell(Raw, block) :-
 normalize_cell(Raw, white) :-
     (Raw == white ; Raw == "white"), !.
 normalize_cell([A, D], clue(A, D)) :-
-    integer(A), A >= 0,
-    integer(D), D >= 0, !.
+    integer(A), between(0, 35, A),
+    integer(D), between(0, 35, D),
+    (A > 0 ; D > 0), !.
 normalize_cell(Raw, _) :-
     throw(error(domain_error(kakuro_cell, Raw), context(normalize_cell/2, 'célula inválida'))).
 
