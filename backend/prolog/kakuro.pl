@@ -1,4 +1,4 @@
-﻿:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
+:- module(kakuro, [solution_count/3, solve/3, check/3, hint/3]).
 
 :- use_module(library(clpfd)).
 :- use_module(library(lists)).
@@ -17,8 +17,9 @@ normalize_cell(Raw, block) :-
 normalize_cell(Raw, white) :-
     (Raw == white ; Raw == "white"), !.
 normalize_cell([A, D], clue(A, D)) :-
-    integer(A), A >= 0,
-    integer(D), D >= 0, !.
+    integer(A), between(0, 35, A),
+    integer(D), between(0, 35, D),
+    (A > 0 ; D > 0), !.
 normalize_cell(Raw, _) :-
     throw(error(domain_error(kakuro_cell, Raw), context(normalize_cell/2, 'célula inválida'))).
 
@@ -48,70 +49,58 @@ head_tail([H|T], H, T).
 %  Horizontal: pista = A de clue(A,_) com A > 0, seguida de whites
 %  Vertical:   pista = D de clue(_,D) com D > 0, seguida de whites na coluna
 sequences(Puzzle, Seqs) :-
-    h_seqs(Puzzle, 0, HSeqs),
-    transp(Puzzle, TPuzzle),
-    v_seqs(TPuzzle, 0, VSeqs),
+    sequences(Puzzle, HSeqs, VSeqs),
     append(HSeqs, VSeqs, Seqs).
 
-%horizontais:
-h_seqs([], _, []).
-h_seqs([Row|Rows], R, Seqs) :-
-    row_seqs(Row, R, 0, S1),
-    R1 is R + 1,
-    h_seqs(Rows, R1, S2),
+sequences(Puzzle, HSeqs, VSeqs) :-
+    dir_seqs(horizontal, Puzzle, 0, HSeqs),
+    transp(Puzzle, TPuzzle),
+    dir_seqs(vertical, TPuzzle, 0, VSeqs).
+
+dir_seqs(_, [], _, []).
+dir_seqs(Dir, [Line|Lines], Idx, Seqs) :-
+    line_seqs(Dir, Line, Idx, 0, S1),
+    Idx1 is Idx + 1,
+    dir_seqs(Dir, Lines, Idx1, S2),
     append(S1, S2, Seqs).
 
-row_seqs([], _, _, []).
-row_seqs([clue(A,_)|Rest], R, C, Seqs) :-
-    A > 0, !,
-    C1 is C + 1,
-    collect_whites_h(Rest, R, C1, Cells, Remaining, NextC),
-    (   Cells = [_,_|_]                     % ≥ 2 casas
-    ->  Seqs = [seq(A, Cells)|More]
-    ;   Seqs = More                          % sequência degenerada: ignora
+line_seqs(_, [], _, _, []).
+line_seqs(Dir, [Cell|Rest], LineIdx, PosIdx, Seqs) :-
+    clue_value(Dir, Cell, Clue),
+    Clue > 0, !,
+    Pos1 is PosIdx + 1,
+    collect_whites(Dir, Rest, LineIdx, Pos1, Cells, Remaining, NextPos),
+    length(Cells, Len),
+    (   between(2, 5, Len)
+    ->  Seqs = [seq(Clue, Cells)|More]
+    ;   seq_error_info(Dir, LineIdx, PosIdx, Clue, Cells, ErrTerm, ErrMsg),
+        throw(error(domain_error(kakuro_sequence, ErrTerm),
+                    context(line_seqs/5, ErrMsg)))
     ),
-    row_seqs(Remaining, R, NextC, More).
-row_seqs([_|Rest], R, C, Seqs) :-
-    C1 is C + 1,
-    row_seqs(Rest, R, C1, Seqs).
+    line_seqs(Dir, Remaining, LineIdx, NextPos, More).
+line_seqs(Dir, [_|Rest], LineIdx, PosIdx, Seqs) :-
+    Pos1 is PosIdx + 1,
+    line_seqs(Dir, Rest, LineIdx, Pos1, Seqs).
 
-collect_whites_h([], _, C, [], [], C).
-collect_whites_h([white|Rest], R, C, [pos(R,C)|Cells], Rem, NC) :-
+collect_whites(_, [], _, PosIdx, [], [], PosIdx).
+collect_whites(Dir, [white|Rest], LineIdx, PosIdx, [Pos|Cells], Rem, NextPos) :-
     !,
-    C1 is C + 1,
-    collect_whites_h(Rest, R, C1, Cells, Rem, NC).
-collect_whites_h([Cell|Rest], _, C, [], [Cell|Rest], C) :-
+    make_pos(Dir, LineIdx, PosIdx, Pos),
+    Pos1 is PosIdx + 1,
+    collect_whites(Dir, Rest, LineIdx, Pos1, Cells, Rem, NextPos).
+collect_whites(_, [Cell|Rest], _, PosIdx, [], [Cell|Rest], PosIdx) :-
     Cell \= white.
 
-% verticais:
-v_seqs([], _, []).
-v_seqs([Col|Cols], C, Seqs) :-
-    col_seqs(Col, C, 0, S1),
-    C1 is C + 1,
-    v_seqs(Cols, C1, S2),
-    append(S1, S2, Seqs).
+clue_value(horizontal, clue(A, _), A).
+clue_value(vertical,   clue(_, D), D).
 
-col_seqs([], _, _, []).
-col_seqs([clue(_,D)|Rest], C, R, Seqs) :-
-    D > 0, !,
-    R1 is R + 1,
-    collect_whites_v(Rest, C, R1, Cells, Remaining, NextR),
-    (   Cells = [_,_|_]
-    ->  Seqs = [seq(D, Cells)|More]
-    ;   Seqs = More
-    ),
-    col_seqs(Remaining, C, NextR, More).
-col_seqs([_|Rest], C, R, Seqs) :-
-    R1 is R + 1,
-    col_seqs(Rest, C, R1, Seqs).
+make_pos(horizontal, R, C, pos(R, C)).
+make_pos(vertical,   C, R, pos(R, C)).
 
-collect_whites_v([], _, R, [], [], R).
-collect_whites_v([white|Rest], C, R, [pos(R,C)|Cells], Rem, NR) :-
-    !,
-    R1 is R + 1,
-    collect_whites_v(Rest, C, R1, Cells, Rem, NR).
-collect_whites_v([Cell|Rest], _, R, [], [Cell|Rest], R) :-
-    Cell \= white.
+seq_error_info(horizontal, R, C, A, Cells, seq(horizontal, R, C, A, Cells),
+               'sequência horizontal deve ter entre 2 e 5 casas').
+seq_error_info(vertical,   C, R, D, Cells, seq(vertical,   R, C, D, Cells),
+               'sequência vertical deve ter entre 2 e 5 casas').
 
 
 %  4. Coleta das posições brancas
@@ -140,11 +129,28 @@ white_pos_row([_|Rest], R, C, More) :-
 setup(Puzzle, Entradas, VarMap, AllVars) :-
     normalize_puzzle(Puzzle, NPuzzle),
     white_positions(NPuzzle, Positions),
+    sequences(NPuzzle, HSeqs, VSeqs),
+    validate_white_coverage(Positions, HSeqs, VSeqs),
+    append(HSeqs, VSeqs, Seqs),
     make_varmap(Positions, VarMap, AllVars),
     AllVars ins 1..9,
     apply_entries(Entradas, VarMap),
-    sequences(NPuzzle, Seqs),
     post_constraints(Seqs, VarMap).
+
+validate_white_coverage(Positions, HSeqs, VSeqs) :-
+    seq_positions(HSeqs, HPos),
+    seq_positions(VSeqs, VPos),
+    forall(member(Pos, Positions),
+           (   memberchk(Pos, HPos),
+               memberchk(Pos, VPos)
+           ->  true
+           ;   throw(error(domain_error(kakuro_white_cell, Pos),
+                           context(validate_white_coverage/3,
+                                   'casa branca deve pertencer a uma sequência horizontal e uma vertical')))
+           )).
+
+seq_positions(Seqs, Positions) :-
+    findall(Pos, (member(seq(_, Cells), Seqs), member(Pos, Cells)), Positions).
 
 make_varmap([], [], []).
 make_varmap([P|Ps], [P-V|Map], [V|Vs]) :-
@@ -153,15 +159,27 @@ make_varmap([P|Ps], [P-V|Map], [V|Vs]) :-
 lookup(Pos, [Pos-V|_], V) :- !.
 lookup(Pos, [_|Rest], V)  :- lookup(Pos, Rest, V).
 
-apply_entries([], _).
-apply_entries([Entry|Es], Map) :-
+apply_entries(Entradas, Map) :-
+    (   is_list(Entradas)
+    ->  apply_entries(Entradas, Map, [])
+    ;   throw(error(domain_error(kakuro_entries, Entradas),
+                    context(apply_entries/2, 'entradas devem ser uma lista')))
+    ).
+
+apply_entries([], _, _).
+apply_entries([Entry|Es], Map, Seen) :-
     (   Entry = [L, C, Val],
         integer(L), integer(C), integer(Val),
         between(1, 9, Val),
         lookup(pos(L, C), Map, Var)
-    ->  Var #= Val,
-        apply_entries(Es, Map)
-    ;   throw(error(domain_error(kakuro_entry, Entry), context(apply_entries/2, 'entrada inválida ou fora de casa branca')))
+    ->  (   memberchk(pos(L, C), Seen)
+        ->  throw(error(domain_error(kakuro_duplicate_entry, Entry),
+                        context(apply_entries/3, 'posição duplicada nas entradas')))
+        ;   Var #= Val,
+            apply_entries(Es, Map, [pos(L, C)|Seen])
+        )
+    ;   throw(error(domain_error(kakuro_entry, Entry),
+                    context(apply_entries/3, 'entrada inválida ou fora de casa branca')))
     ).
 
 post_constraints([], _).
@@ -219,12 +237,14 @@ check(Puzzle, Entradas, Estado) :-
 %  9. hint(+Puzzle, +Entradas, -Resultado)
 
 hint(Puzzle, Entradas, Resultado) :-
-    (   setup(Puzzle, Entradas, VarMap, _)
+    (   setup(Puzzle, Entradas, VarMap, Vars)
     ->  (   all_filled(VarMap, Entradas)
         ->  Resultado = "complete"
-        ;   once(solve(Puzzle, Entradas, Candidata))
-        ->  filled_set(Entradas, Filled),
-            first_forced(Puzzle, Entradas, Filled, Candidata, Resultado)
+        ;   copy_term(VarMap-Vars, CandMap-CandVars),
+            once(labeling([ff], CandVars))
+        ->  maplist(pair_to_entry, CandMap, Candidata),
+            filled_set(Entradas, Filled),
+            first_forced(VarMap, Vars, Filled, Candidata, Resultado)
         ;   Resultado = "inconsistent"
         )
     ;   Resultado = "inconsistent"
@@ -232,16 +252,15 @@ hint(Puzzle, Entradas, Resultado) :-
 
 %  Percorre a solução candidata e devolve a primeira casa vazia forçada.
 first_forced(_, _, _, [], "no_forced_hint").
-first_forced(Puzzle, Entradas, Filled, [[R,C,V]|Rest], Resultado) :-
+first_forced(VarMap, Vars, Filled, [[R,C,V]|Rest], Resultado) :-
     (   \+ memberchk(pos(R,C), Filled),
-        \+ alternative_exists(Puzzle, Entradas, R, C, V)
+        \+ alternative_exists(VarMap, Vars, R, C, V)
     ->  Resultado = ["hint", R, C, V]
-    ;   first_forced(Puzzle, Entradas, Filled, Rest, Resultado)
+    ;   first_forced(VarMap, Vars, Filled, Rest, Resultado)
     ).
 
 %  Existe solução em que a casa (R,C) tem valor diferente de V?
-alternative_exists(Puzzle, Entradas, R, C, V) :-
-    setup(Puzzle, Entradas, VarMap, Vars),
+alternative_exists(VarMap, Vars, R, C, V) :-
     lookup(pos(R,C), VarMap, X),
     X #\= V,
     once(labeling([ff], Vars)).
