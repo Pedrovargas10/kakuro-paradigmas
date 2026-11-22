@@ -14,7 +14,8 @@ com teclado, bloqueio durante requisições e recuperação de falhas de rede.
 - Python 3.12 ou superior e uv.
 - SWI-Prolog 9.2 ou superior, disponível como `swipl` no PATH.
 - Compilador C e cabeçalhos de desenvolvimento Python/SWI-Prolog para o Janus.
-- Node 20 ou superior e npm para o frontend; GNU Make para os comandos da raiz.
+- Node 20.19+ na série 20, 22.13+ na série 22 ou Node 24 LTS, com npm.
+- GNU Make para os comandos da raiz.
 
 Verifique `python3 --version`, `uv --version`, `swipl --version`,
 `node --version` e `npm --version`. O compilador Elm e o `elm-format` são
@@ -62,6 +63,8 @@ testes de teclado, controles e falha de rede no navegador.
 make install
 make dev
 ```
+
+A instalação usa `backend/uv.lock` e `frontend/package-lock.json`. Se o monitor de arquivos atingir o limite do sistema (`EMFILE` ou `Too many open files`), inicie os dois serviços com `WATCHFILES_FORCE_POLLING=true CHOKIDAR_USEPOLLING=true make dev`.
 
 Abra http://localhost:5173. O Vite encaminha `/api` ao backend em
 `127.0.0.1:8000`. `Ctrl+C` em `make dev` encerra os dois processos. Para testar
