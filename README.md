@@ -102,5 +102,6 @@ npx --no-install elm-format --validate src/
 - `docs/`: contrato da API e documentação de integração.
 - `RELATORIO.md`: relatório coletivo, ainda com seções pendentes.
 
-`make validar` depende do arquivo oficial do professor na issue #9. O arquivo
-atual está vazio; a entrega documental não pode ser considerada validada.
+`make validar` executa o validador oficial em `scripts/validar_entrega.py` (issue #9).
+Ele lista os campos e problemas de formato ainda pendentes nos documentos.
+A origem do script está registrada na seção 11 do relatório.
