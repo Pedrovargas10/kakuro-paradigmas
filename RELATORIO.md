@@ -166,23 +166,45 @@ As views recebem dados e mensagens. O módulo `Kakuro` concentra funções puras
 
 ## 7. Integração
 
-O Elm se comunica por HTTP/JSON com FastAPI. O Python valida o formato,
-converte os dados e consulta o SWI-Prolog pelo Janus com parâmetros vinculados.
-As regras do jogo permanecem no Prolog. A opção A acordada na issue #4 usa
-`"block"`, `"white"` e pistas como pares numéricos na fronteira Janus;
-entradas e soluções são triplas de linha, coluna e valor, com coordenadas desde 0.
+A comunicação percorre quatro etapas. `Api.elm` envia uma requisição HTTP com JSON, o FastAPI valida o corpo com Pydantic, a ponte Python converte os valores e consulta o SWI-Prolog pelo Janus. O resultado retorna pelo mesmo caminho e é decodificado pelo Elm para atualizar a partida. O proxy de desenvolvimento encaminha `/api` da porta 5173 para a API na porta 8000 (`frontend/vite.config.js`).
 
-| Rota / chamada | Entrada | Saída | Predicado Prolog |
-|----------------|---------|-------|------------------|
-| `POST /api/generate` | Objeto vazio | Puzzle 6x6 sem solução | `generator:generate/1` |
-| `POST /api/check` | Puzzle e entradas | Estado incomplete, inconsistent ou solved | `kakuro:check/3` |
-| `POST /api/solve` | Puzzle e entradas | Lista de valores da solução compatível | `kakuro:solve/3` |
-| `POST /api/hint` | Puzzle e entradas | Dica ou estado complete, inconsistent, no_forced_hint | `kakuro:hint/3` |
+**Contrato HTTP**
 
-A implementação está em `backend/app/main.py:113`, `backend/app/main.py:143`
-e `backend/app/prolog.py:144`. Entrada inválida retorna 422; geração que falha
-ou esgota 10 segundos retorna 503; erro interno retorna 500 com mensagem controlada.
-O roteiro de Swagger e o teste HTTP estão em `docs/API_PYTHON.md`.
+Todas as rotas usam POST. O objeto `puzzle` contém `cells`, uma matriz 6×6. Cada casa tem `kind` igual a `block`, `clue` ou `playable`. Pistas usam `across` e `down`, e as entradas do jogador são objetos com `row`, `col` e `value`. As coordenadas começam em zero. Cada requisição carrega o puzzle e o preenchimento necessário à operação. A API não depende de sessão nem de banco de dados.
+
+| Rota | Corpo da requisição | Resposta HTTP 200 | Consulta Prolog |
+|---|---|---|---|
+| `/api/generate` | `{}` | Objeto `puzzle` com a grade, sem os dígitos da solução | `generator:generate/1` |
+| `/api/check` | Objeto `puzzle` e lista `entries` | Campo `state` com incomplete, inconsistent ou solved | `kakuro:check/3` |
+| `/api/solve` | Objeto `puzzle` e lista `entries` | Campo `solution` com todas as casas resolvidas, respeitando as entradas | `kakuro:solve/3` |
+| `/api/hint` | Objeto `puzzle` e lista `entries` | Campos `kind`, `row`, `col`, `value` para uma dica, ou `kind` com complete, inconsistent ou no_forced_hint | `kakuro:hint/3` |
+
+As quatro rotas estão em `backend/app/main.py:113`, `:127`, `:143` e `:154`. Os modelos de `backend/app/schemas.py:59`, `:88` e `:100` verificam dimensões, coordenadas, dígitos inteiros de 1 a 9, posições duplicadas e entradas em casas jogáveis. Tipos como strings, booleanos e decimais são rejeitados quando o contrato exige inteiro. A validação das sequências e demais restrições do Kakuro é feita pelo Prolog.
+
+**Conversões e consultas Janus**
+
+Na inicialização da aplicação, o `lifespan` chama `ensure_prolog_loaded`, que carrega `kakuro.pl` e `generator.pl` uma vez por processo, com proteção por lock (`backend/app/main.py:32` e `backend/app/prolog.py:74`). A opção A acordada na issue #4 define a fronteira de dados entre Python e Prolog:
+
+| JSON da API | Valor recebido pelo Prolog |
+|---|---|
+| Casa com `kind` igual a `block` | String `"block"` |
+| Casa com `kind` igual a `playable` | String `"white"` |
+| Pista com `across` igual a 7 e `down` igual a null | Lista `[7, 0]` |
+| Entrada `{"row": 1, "col": 2, "value": 4}` | Tripla `[1, 2, 4]` |
+
+`puzzle_to_prolog` e `entries_to_prolog` fazem a conversão de entrada; `prolog_to_puzzle` e `prolog_to_entries` reconstruem os objetos da resposta (`backend/app/prolog.py:102`, `:131`, `:125` e `:136`). O Janus recebe consultas com texto fixo e dados vinculados em parâmetros. Por exemplo, `check_puzzle` usa o objetivo `kakuro:check(Puzzle, Entradas, Estado)` e passa as listas no dicionário de parâmetros (`backend/app/prolog.py:182`). Isso evita construir código Prolog a partir de texto enviado pelo cliente.
+
+O Python valida, converte e encaminha. As decisões de consistência, busca de solução, unicidade, geração e valor da dica são tomadas pelos predicados Prolog. Os estados normais de verificação e dica retornam HTTP 200, inclusive quando o preenchimento é inconsistente.
+
+**Falhas e preservação da partida**
+
+Os erros seguem o formato `{"detail": "mensagem legível"}`. Entrada inválida retorna HTTP 422. Uma tentativa de resolver um preenchimento sem solução também retorna 422. A geração é limitada a dez segundos e retorna 503 quando não consegue produzir um puzzle nesse limite. Falhas internas retornam 500 com uma mensagem controlada (`backend/app/main.py:65`, `:76`, `:87` e `:98`).
+
+O modelo Elm mantém o tabuleiro enquanto uma operação está em andamento. Uma falha registra o pedido que pode ser repetido e a mensagem correspondente (`frontend/src/Main.elm:215` e `:319`). Dica e resolução são aplicadas por funções que preservam as casas já preenchidas (`frontend/src/Kakuro.elm:304` e `:313`).
+
+**Conferência da integração**
+
+A documentação interativa está em `/docs`. O roteiro em `docs/API_PYTHON.md` exercita geração, verificação parcial, resolução, conclusão, dica na casa restante e rejeição de entradas inválidas. A suíte pytest consulta o Janus real e usa os três puzzles compartilhados de `docs/fixtures/`. O comando `make test-integration PARTIDAS=10`, com a API iniciada em outro terminal, executa o fluxo por HTTP real, verifica erros e preservação de entradas e informa os tempos de geração. Os resultados registrados e seus limites estão na seção 8.
 
 ## 8. Testes e validação
 
