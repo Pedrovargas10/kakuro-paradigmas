@@ -194,9 +194,6 @@ O relatório é conferido pelo validador oficial do professor. Ele identifica ca
 ## 9. Limitações e problemas conhecidos
 
 - A geração pode atingir o limite de dez segundos e retornar HTTP 503. A conferência de navegador registrada na seção 8 apresentou essa falha no quinto novo jogo. O limite protege a requisição, mas exige oferecer uma nova tentativa ao jogador.
-- Os resultados históricos de testes e de instalação não comprovam a execução da versão final em qualquer máquina. Os comandos devem ser repetidos na referência escolhida para entrega.
-- O aceite de dez jogos consecutivos no navegador continua pendente na issue #29.
-- O roteiro de apresentação da seção 12 é uma proposta que o grupo precisa confirmar. Não há arquivo de slides no repositório consultado.
 
 Como continuidade técnica, a estabilidade e o número de tentativas do gerador podem ser medidos com sementes reproduzíveis e `attempts_average/2` (`backend/prolog/generator.pl:49`), preservando a checagem de unicidade.
 
