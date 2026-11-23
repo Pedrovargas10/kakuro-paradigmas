@@ -26,7 +26,6 @@ Kakuro é um quebra-cabeça de somas em uma grade 6×6. O jogador preenche as ca
 
 ![Interface real do Kakuro com puzzle gerado pelo backend](docs/captura.png)
 
-Captura realizada em 23/11/2026 no navegador integrado do Orca, com a aplicação iniciada por `make dev` e puzzle obtido da API local.
 
 ## 3. Como executar
 
