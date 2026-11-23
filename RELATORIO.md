@@ -3,26 +3,30 @@
 ## 1. Identificação
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
-|---------------|-----------|-----------------|----------------|
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
-| [Nome]        | [000000]  | [16h]           | [@usuario]     |
-| [Nome]        | [000000]  | [14h]           | [@usuario]     |
+|---|---|---|---|
+| Pedro Vargas | 231039178 | 16h | @Pedrovargas10 |
+| Davi Nobre | 211062929 | 14h | @Jagaima |
+| Lucas Machado | 232014093 | 14h | @Lucas-Ricarte |
+| Samuel Lobo | 232014191 | 14h | @Samuelvlobo |
+| Caio Rocha | 232001371 | 14h | @Dexmachi |
+| Caio Soares | 232014638 | 16h | @CaioSoandrd |
+| Vitor Feijó | 221008516 | 14h | @vitorfleonardo |
 
 - **Nome do projeto:** Kakuro — Prolog, Python e Elm
 - **Nome do grupo:** Equipe kakuro
 - **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
 - **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35`
 - **Ponto de partida:** outro jogo conhecido
-- **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
+- **Slides da apresentação oral:** não há
 A referência acima identifica a base técnica desta revisão documental. O grupo deve atualizá-la para a versão final antes da entrega.
 
 ## 2. Resumo
 
 Kakuro é um quebra-cabeça de somas em uma grade 6×6. O jogador preenche as casas com dígitos de 1 a 9, sem repetição dentro de cada sequência, respeitando as pistas horizontais e verticais. O Prolog gera puzzles com solução única, verifica preenchimentos, encontra soluções e identifica dicas forçadas. A interface Elm permite jogar no navegador e usa uma API Python para consultar o motor lógico.
 
-Captura real da interface pendente de inclusão antes da entrega. A versão disponível neste ambiente não tem as dependências do frontend instaladas.
+![Interface real do Kakuro com puzzle gerado pelo backend](docs/captura.png)
+
+Captura realizada em 23/11/2026 no navegador integrado do Orca, com a aplicação iniciada por `make dev` e puzzle obtido da API local.
 
 ## 3. Como executar
 
@@ -224,8 +228,7 @@ O aceite do fluxo no navegador segue na #29. O validador oficial foi integrado n
 - A geração pode atingir o limite de dez segundos e retornar HTTP 503. A conferência de navegador registrada na seção 8 apresentou essa falha no quinto novo jogo. O limite protege a requisição, mas exige oferecer uma nova tentativa ao jogador.
 - Os resultados históricos de testes e de instalação não comprovam a execução da versão final em qualquer máquina. Os comandos devem ser repetidos na referência escolhida para entrega.
 - O aceite de dez jogos consecutivos no navegador continua pendente na issue #29.
-- Identificação dos integrantes, responsáveis pela apresentação, material de slides ainda exigem confirmação do grupo.
-- A captura real da interface deve ser adicionada antes da entrega.
+- O roteiro de apresentação da seção 12 é uma proposta que o grupo precisa confirmar. Não há arquivo de slides no repositório consultado.
 
 Como continuidade técnica, a estabilidade e o número de tentativas do gerador podem ser medidos com sementes reproduzíveis e `attempts_average/2` (`backend/prolog/generator.pl:49`), preservando a checagem de unicidade.
 
@@ -233,12 +236,13 @@ Como continuidade técnica, a estabilidade e o número de tentativas do gerador 
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
-| Pedro Vargas (@Pedrovargas10) | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
-| Caio (@CaioSoandrd) | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile e alvos do backend (#30/#51), guarda do validador (#46), README/.gitignore (#52), ampliação do verificador HTTP (#50), suíte solve/hint com fixtures (#55), revisão assistida dos PRs Python de Pedro e documentação de integração (#42). Evidências: PRs #30, #33, #34, #42, #46, #50, #51, #52 e #55. |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
-| [Nome]     | [...] |
+| Pedro Vargas | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
+| Caio Soares | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile e alvos do backend (#30/#51), guarda do validador (#46), README/.gitignore (#52), ampliação do verificador HTTP (#50), suíte solve/hint com fixtures (#55), revisão assistida dos PRs Python de Pedro e documentação de integração (#42). Evidências: PRs #30, #33, #34, #42, #46, #50, #51, #52 e #55. |
+| Davi Nobre | Núcleo de regras, solução, verificação e dicas Prolog, correções e fixtures oficiais. Evidências nos commits 14171c7 e 23b83ec e no PR #49. |
+| Lucas Machado | Geração de puzzles, contagem de tentativas e testes Prolog do gerador. Evidências nos commits ac19c3c, abdbff0 e 0a0d230. |
+| Samuel Lobo | Infraestrutura inicial do frontend com Vite, Elm e aplicação mínima. Evidência no commit 3ec4bdb e PR #54. |
+| Caio Rocha | Validações estruturais e de entradas no Prolog, testes, otimização de hint e unificação da extração de sequências. Evidências nos commits 5d89370, a825b53, 67c8bcf e f417872. |
+| Vitor Feijó | Domínio, comunicação HTTP, estado da partida, teclado, views, estilos e testes Elm. Evidências nos commits 5f7b22a, c57c562, 7317f23 e 72a1299 e PR #57. |
 
 ## 11. Fontes, código de terceiros e uso de IA
 
@@ -264,16 +268,18 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 ## 12. Apresentação oral
 
-- **Slides:** [mesmo caminho indicado na seção 1, ou "não há"]
-- **Roteiro:**
+- **Slides:** não há
+O roteiro abaixo é uma proposta de distribuição dos 15 minutos, baseada nas contribuições registradas. O grupo deve confirmar os responsáveis antes da apresentação. Os slides estão indicados como inexistentes porque nenhum arquivo foi encontrado no repositório consultado.
+
+- **Roteiro proposto:**
 
 | Parte | Duração | Quem apresenta |
 |-------|:-------:|----------------|
-| Contexto e objetivo | 2 min | [Responsável a confirmar] |
-| Demonstração | 5 min | [Responsável a confirmar] |
-| Código Prolog | 3 min | [Responsável a confirmar] |
-| Código Elm | 3 min | [Responsável a confirmar] |
-| Limitações e aprendizados | 2 min | [Responsável a confirmar] |
+| Contexto e objetivo | 2 min | Pedro Vargas |
+| Demonstração | 5 min | Caio Soares |
+| Código Prolog | 3 min | Davi Nobre, Lucas Machado e Caio Rocha |
+| Código Elm | 3 min | Samuel Lobo e Vitor Feijó |
+| Limitações e aprendizados | 2 min | Pedro Vargas |
 
 ## 13. Reflexão sobre os paradigmas
 
