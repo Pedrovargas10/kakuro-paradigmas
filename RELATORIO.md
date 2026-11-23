@@ -238,11 +238,11 @@ Como continuidade técnica, a estabilidade e o número de tentativas do gerador 
 |------------|--------------------------|
 | Pedro Vargas | Responsável pela infraestrutura do backend, ponte de geração/verificação, rotas generate/check, seus testes e documentação. |
 | Caio Soares | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile e alvos do backend (#30/#51), guarda do validador (#46), README/.gitignore (#52), ampliação do verificador HTTP (#50), suíte solve/hint com fixtures (#55), revisão assistida dos PRs Python de Pedro e documentação de integração (#42). Evidências: PRs #30, #33, #34, #42, #46, #50, #51, #52 e #55. |
-| Davi Nobre | Núcleo de regras, solução, verificação e dicas Prolog, correções e fixtures oficiais. Evidências nos commits 14171c7 e 23b83ec e no PR #49. |
-| Lucas Machado | Geração de puzzles, contagem de tentativas e testes Prolog do gerador. Evidências nos commits ac19c3c, abdbff0 e 0a0d230. |
-| Samuel Lobo | Infraestrutura inicial do frontend com Vite, Elm e aplicação mínima. Evidência no commit 3ec4bdb e PR #54. |
-| Caio Rocha | Validações estruturais e de entradas no Prolog, testes, otimização de hint e unificação da extração de sequências. Evidências nos commits 5d89370, a825b53, 67c8bcf e f417872. |
-| Vitor Feijó | Domínio, comunicação HTTP, estado da partida, teclado, views, estilos e testes Elm. Evidências nos commits 5f7b22a, c57c562, 7317f23 e 72a1299 e PR #57. |
+| Davi Nobre | [Preenchimento individual pendente] |
+| Lucas Machado | [Preenchimento individual pendente] |
+| Samuel Lobo | [Preenchimento individual pendente] |
+| Caio Rocha | [Preenchimento individual pendente] |
+| Vitor Feijó | [Preenchimento individual pendente] |
 
 ## 11. Fontes, código de terceiros e uso de IA
 
