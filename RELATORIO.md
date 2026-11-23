@@ -205,7 +205,7 @@ Como continuidade técnica, a estabilidade e o número de tentativas do gerador 
 | Davi Nobre | [Preenchimento individual pendente] |
 | Lucas Machado | [Preenchimento individual pendente] |
 | Samuel Lobo | [Preenchimento individual pendente] |
-| Caio Rocha | [Preenchimento individual pendente] |
+| Caio Rocha (@Dexmachi) | Validações estruturais do puzzle e das entradas em `backend/prolog/kakuro.pl`, otimização de `hint/3`, unificação da extração de sequências horizontais e verticais, adição de testes `plunit` em `backend/prolog/test_kakuro.pl`. |
 | Vitor Feijó | [Preenchimento individual pendente] |
 
 ## 11. Fontes, código de terceiros e uso de IA
