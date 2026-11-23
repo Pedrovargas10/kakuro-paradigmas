@@ -160,7 +160,7 @@ fillIfEmpty entry board =
 
 `fillIfEmpty` verifica se a posição está vazia antes de chamar `setDigit`. Esta segunda função só altera células `Playable` (`Kakuro.elm:318`). Nos demais casos, o tabuleiro é preservado. `fillEmptyCells` aplica essa função às entradas de uma solução. Isso preserva os números digitados pelo jogador durante dica e resolução. A assinatura e o casamento de padrões explicitam as condições de atualização.
 
-O histórico consultado não registra um episódio específico em que uma mensagem do compilador guiou uma refatoração. Esse relato precisa ser complementado pelo responsável pelo frontend antes da entrega.
+O relato de implementação do PR #57 registra duas refatorações guiadas pelo compilador. Ao trocar `LoadFailed String` por `LoadFailed Api.Error`, o compilador apontou os locais de criação e exibição afetados. Ao renomear o tipo de pistas de `Clue` para `Sums`, listou os usos em `Kakuro`, `Api` e `View.Board`. A versão atual usa `LoadFailed Api.Error` e `Sums`, conforme `Main.elm:26` e `Kakuro.elm:59`. O relato original está em https://github.com/Pedrovargas10/kakuro-paradigmas/pull/57.
 
 ## 7. Integração
 
@@ -224,7 +224,7 @@ O aceite do fluxo no navegador segue na #29. O validador oficial foi integrado n
 - A geração pode atingir o limite de dez segundos e retornar HTTP 503. A conferência de navegador registrada na seção 8 apresentou essa falha no quinto novo jogo. O limite protege a requisição, mas exige oferecer uma nova tentativa ao jogador.
 - Os resultados históricos de testes e de instalação não comprovam a execução da versão final em qualquer máquina. Os comandos devem ser repetidos na referência escolhida para entrega.
 - O aceite de dez jogos consecutivos no navegador continua pendente na issue #29.
-- Identificação dos integrantes, responsáveis pela apresentação, material de slides e relato específico da experiência com o compilador Elm ainda exigem confirmação do grupo.
+- Identificação dos integrantes, responsáveis pela apresentação, material de slides ainda exigem confirmação do grupo.
 - A captura real da interface deve ser adicionada antes da entrega.
 
 Como continuidade técnica, a estabilidade e o número de tentativas do gerador podem ser medidos com sementes reproduzíveis e `attempts_average/2` (`backend/prolog/generator.pl:49`), preservando a checagem de unicidade.
@@ -255,6 +255,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 **Uso de ferramentas de IA.**
 
 - **Faixa de uso no código:** auxiliar
+
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
 | Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
@@ -280,4 +281,4 @@ A modelagem por restrições concentra as regras de somas e de dígitos distinto
 
 No Elm, os estados de carregamento, erro e partida aparecem como alternativas de um tipo, e as respostas HTTP exigem tratar `Ok` e `Err`. O encapsulamento de `Digit` e `Board` concentra validações na construção dos dados. Funções como `fillIfEmpty` deixam explícito que dica e resolução só preenchem casas vazias. O custo dessa organização é escrever conversões e decoders que preservem o contrato com a API.
 
-A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. O grupo deve complementar esta análise com sua experiência de desenvolvimento e o exemplo de refatoração solicitado na seção 6.3.
+A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. Os exemplos de refatoração relatados pelo responsável pelo frontend estão registrados na seção 6.3. O grupo deve revisar esta análise e complementar com sua experiência de desenvolvimento.
