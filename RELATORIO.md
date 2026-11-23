@@ -181,40 +181,15 @@ A integração é conferida pelos testes da API e pelo comando `make test-integr
 
 ## 8. Testes e validação
 
-A suíte pytest cobre as rotas HTTP, o contrato de tipos, as conversões Janus e os erros 422, 500 e 503. Os fixtures oficiais cobrem preenchimento parcial, solução conhecida, dica, conclusão e entradas incompatíveis. Os testes Prolog exercitam contagem, restrições, geração e dicas; os testes Elm cobrem domínio e codificação JSON.
+A validação do projeto combina testes automatizados com conferências da aplicação em funcionamento. Foram usados puzzles fixos com solução conhecida para verificar se o sistema reconhece uma partida incompleta, identifica um preenchimento incompatível e aceita uma solução correta. Também foram testadas a preservação dos números digitados pelo jogador e a aplicação da dica na casa vazia correta.
 
-Na entrega Python das issues #6, #10, #15, #16, #23 e #24, a suíte
-`cd backend && uv run --locked pytest` passou 83 testes. Ela cobre contratos
-estritos, entradas duplicadas ou em casas não jogáveis, erros 422/500/503,
-conversões e integração Janus real. A contagem de soluções é conferida pelo
-próprio Prolog. Os dados fixos de teste têm sua origem documentada em
-`backend/tests/fixtures/README.md`. Esses resultados não substituem os testes
-plunit nem a verificação do frontend.
+Na parte Python, os testes verificam as quatro operações da API e sua comunicação real com o Prolog. Foram considerados casos como valores fora de 1 a 9, posições repetidas e tentativas de preencher casas de pista ou bloqueio. Na execução registrada em 18/11/2026, os 113 testes Python passaram. Os testes Prolog verificam as regras, as soluções e a geração dos puzzles. No Elm, os testes cobrem as operações do tabuleiro e a leitura e escrita dos dados trocados com a API.
 
-O comando `uv run --locked python scripts/verificar_api.py --partidas 10`,
-contra um servidor `fastapi dev` real, completou dez partidas pelo fluxo
-gerar, verificar, resolver, dica e conclusão. Neste ambiente (Python 3.12.3,
-SWI-Prolog 10.0.2 e uv 0.8.14), a geração levou em média 1,985 s e no máximo
-6,166 s. É uma amostra local, não uma garantia de desempenho em outras máquinas.
+A comunicação entre as partes também foi exercitada em dez partidas consecutivas, passando por geração, verificação, dica, resolução e conclusão. Nessa amostra, a geração levou em média 3,374 segundos e no máximo 7,312 segundos. A instalação e a inicialização foram conferidas em um ambiente Linux limpo. Nesse ambiente, 39 dos 40 testes Prolog passaram, com uma falha no teste de várias gerações seguidas.
 
-Na preparação de Caio para a Fase 3 (PRs #50 e #51, amostra pré-#49), `make test`
-passou 83 testes Python e 21 testes Prolog. O verificador ampliado testa entradas
-incompatíveis, 422 com mensagem legível, preservação das entradas parciais e
-nova resolução válida após rejeições. Dez partidas passaram com geração média
-de 1,861 s e máxima de 8,659 s, usando Python 3.12.3, SWI-Prolog 9.2.9,
-uv 0.13.9 e Janus 1.5.3. Após a entrada dos PRs #30, #42, #46, #49, #50, #51 e
-#52 na `main`, os 21 casos determinísticos de fixtures de `solve`/`hint` (PR #55)
-passaram integralmente (104/104 no `pytest` nessa execução), enquanto em
-reexecução sobre a `main` `test_generate_with_real_prolog_excludes_solution`
-retornou HTTP 503 por esgotamento do gerador Prolog (82/83 no `pytest`) e
-`make test-prolog` executou 40 testes sem duplicação (39 passaram e
-`generator:varias_geracoes` falhou neste ambiente, conforme #20/#22). Essa medição
-é separada da amostra anterior de Pedro. Em 18/11/2026, na revisão `f9da1bf`, os 113 testes Python passaram com
-Janus real. O verificador HTTP completou dez partidas, com geração média de
-3,374 s e máxima de 7,312 s. Na conferência do navegador houve HTTP 503 no
-quinto novo jogo. No ambiente limpo do PR #58, a instalação e a inicialização
-passaram e o plunit registrou 39/40, com falha em `generator:varias_geracoes`.
-O aceite do fluxo no navegador segue na #29. O validador oficial foi integrado no PR #63 e passou a executar a conferência documental; os apontamentos precisam ser resolvidos antes da entrega.
+A conferência no navegador incluiu dica, resolução e recuperação após falha de comunicação. Houve uma falha de geração no quinto novo jogo, quando o tempo limite foi atingido. Por isso, a estabilidade do gerador ainda precisa de acompanhamento e o fluxo completo deve ser repetido na versão final.
+
+O relatório é conferido pelo validador oficial do professor. Ele identifica campos pendentes, problemas de formatação e referências a arquivos inexistentes. As seções de Prolog e Elm e as contribuições individuais continuam aguardando preenchimento pelos respectivos responsáveis antes da validação final da entrega.
 
 ## 9. Limitações e problemas conhecidos
 
