@@ -84,87 +84,85 @@ As views recebem dados e mensagens. O módulo `Kakuro` concentra funções puras
 
 ### 5.1 Predicados principais
 
+<!--
+  Os predicados mais importantes, com o local no código. Use a notação
+  nome/aridade e indique entradas (+) e saídas (-), como na documentação
+  do SWI-Prolog.
+-->
+
 | Predicado | Local | O que faz |
-|---|---|---|
-| `solve(+Puzzle, +Entradas, -Solucao)` | `backend/prolog/kakuro.pl:206` | Encontra uma solução respeitando as entradas |
-| `solution_count(+Puzzle, +Entradas, -N)` | `backend/prolog/kakuro.pl:199` | Conta até duas soluções para distinguir ausência, unicidade e ambiguidade |
-| `check(+Puzzle, +Entradas, -Estado)` | `backend/prolog/kakuro.pl:225` | Classifica o preenchimento em incomplete, inconsistent ou solved |
-| `hint(+Puzzle, +Entradas, -Resultado)` | `backend/prolog/kakuro.pl:239` | Procura uma casa vazia cujo valor não admite alternativa compatível |
-| `generate(-Puzzle)` e `generate(+Seed, -Puzzle)` | `backend/prolog/generator.pl:22` | Gera um puzzle único com limite de tempo e semente opcional |
+|-----------|-------|-----------|
+| [`resolver(+Entrada, -Saida)`] | [`arquivo.pl:42`] | [...] |
+| [...] | [...] | [...] |
 
 ### 5.2 Conceitos do paradigma lógico utilizados
 
-- Unificação e casamento de padrões distinguem bloqueios, casas brancas e pistas em `normalize_cell/2`, `backend/prolog/kakuro.pl:15`.
-- A recursão percorre linhas, posições e sequências em `dir_seqs/4` e `white_pos_/3`, nas linhas 60 e 110.
-- CLP(FD) define domínio dos dígitos, ausência de repetição e somas em `setup/4` e `post_constraints/2`, nas linhas 129 e 185.
-- `labeling/2` realiza a busca depois da montagem das restrições em `solve/3`, linha 206.
-- `findnsols/4`, limitado por `once/1`, interrompe a contagem após duas soluções, linha 199.
-- A negação em `first_forced/5`, linha 255, verifica a ausência de solução com valor alternativo antes de fornecer uma dica.
-- `maplist/2` e `maplist/3` aplicam restrições e conversões às listas. Cortes nas consultas de posição evitam alternativas depois de uma posição encontrada (`lookup/3`, linha 159).
+<!--
+  Marque o que o projeto usa DE FATO e indique onde. Não é preciso usar
+  tudo; é preciso explicar bem o que foi usado.
+-->
+
+- [ ] Fatos e regras como base de conhecimento: [onde]
+- [ ] Unificação e casamento de padrões: [onde]
+- [ ] Recursão (inclusive sobre listas): [onde]
+- [ ] Backtracking e múltiplas soluções: [onde]
+- [ ] `findall/3`, `bagof/3`, `setof/3` ou similares: [onde]
+- [ ] Corte (`!`) ou negação (`\+`), e por que foram necessários: [onde]
+- [ ] Programação por restrições (CLP(FD) ou outra): [onde]
+- [ ] Predicados de ordem superior (`maplist`, `foldl`, `include`...): [onde]
+- [ ] Outro: [...]
 
 ### 5.3 Trecho em destaque
 
-Trecho de `backend/prolog/kakuro.pl:185`:
+<!--
+  Escolha o trecho de Prolog de que o grupo mais se orgulha (ou o mais
+  difícil). Cole o código e explique como ele funciona: o que é declarado,
+  como o Prolog chega à resposta, e por que essa solução é "lógica" e não
+  uma tradução de um algoritmo imperativo.
+-->
 
 ```prolog
-post_constraints([], _).
-post_constraints([seq(Clue, Cells)|Seqs], Map) :-
-    maplist(lookup_in(Map), Cells, Vars),
-    all_distinct(Vars),
-    sum(Vars, #=, Clue),
-    post_constraints(Seqs, Map).
+[trecho]
 ```
 
-Cada sequência reúne as variáveis das casas associadas à pista. `all_distinct/1` e `sum/3` declaram condições que devem valer simultaneamente. Os cruzamentos compartilham variáveis no mapa de posições. Assim, as restrições de uma direção também reduzem os valores possíveis na outra. A seleção dos valores restantes acontece posteriormente com `labeling/2`.
+[Explicação.]
 
 ## 6. Parte em Elm
 
 ### 6.1 Modelo e mensagens
 
-Trechos de `frontend/src/Main.elm:24` e `frontend/src/Main.elm:38`:
+<!--
+  Os tipos centrais do programa: o Model, o tipo Msg e os custom types do
+  domínio. Explique as escolhas: por que um custom type e não um Bool, por
+  que Maybe ou Result, etc.
+-->
 
 ```elm
-type Model
-    = Loading
-    | LoadFailed Api.Error
-    | InGame Game
-
-type Phase
-    = Ready Stage
-    | Waiting Request Stage
+[type alias Model = ...]
+[type Msg = ...]
 ```
 
-`Game` reúne `board`, `selection`, `phase` e `notice`. As mensagens incluem `PressDigit`, `Check`, `AskHint`, `Solve` e as respostas `GotPuzzle`, `GotCheck`, `GotHint` e `GotSolution`. As respostas HTTP usam `Result Api.Error`, permitindo tratar sucesso e falha por casamento de padrões.
-
-`Maybe Editable` representa uma seleção opcional. Os construtores de `Digit`, `Sums` e `Board` ficam encapsulados no módulo `Kakuro`. `digitFromInt` aceita apenas 1 a 9, `sums` exige uma pista positiva e `fromRows` verifica a grade 6×6 (`frontend/src/Kakuro.elm:40`, `:65` e `:135`).
+[Explicação das escolhas.]
 
 ### 6.2 Conceitos do paradigma funcional utilizados
 
-- A Arquitetura Elm reúne `init`, `update`, `subscriptions` e `view` em `frontend/src/Main.elm:14`.
-- Custom types e `case` distinguem carregamento, falha, partida e operação em andamento (`Main.elm:24`).
-- `Maybe` representa ausência de seleção e dígito. `Result` representa erros de construção do tabuleiro e respostas HTTP (`Kakuro.elm:135`, `Api.elm:124`).
-- `List.map`, `Array.map` e aplicação parcial transformam coleções sem mutação (`Kakuro.elm:150`).
-- Encoders e decoders centralizam o contrato JSON (`Api.elm:160` e `:219`).
-- `Cmd Msg` representa requisições, e `subscriptions` recebe eventos de teclado (`Main.elm:229` e `:324`).
-- A atualização de records cria novos estados. `edit`, `reset` e `receive` controlam quando uma alteração é aceita (`Main.elm:176`, `:186` e `:245`).
+- [ ] Arquitetura Elm (Model, update, view): [onde]
+- [ ] Custom types e `case` exaustivo: [onde]
+- [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
+- [ ] Funções de ordem superior e aplicação parcial: [onde]
+- [ ] Composição (`|>`, `>>`): [onde]
+- [ ] Decoders e encoders JSON: [onde]
+- [ ] Comandos e subscriptions (efeitos controlados): [onde]
+- [ ] Imutabilidade e atualização de records: [onde]
+- [ ] Outro: [...]
 
 ### 6.3 Trecho em destaque
 
-Trecho de `frontend/src/Kakuro.elm:304`:
-
 ```elm
-fillIfEmpty : Entry -> Board -> Board
-fillIfEmpty entry board =
-    if digitAt entry.position board == Nothing then
-        setDigit entry.position (Just entry.digit) board
-
-    else
-        board
+[trecho]
 ```
 
-`fillIfEmpty` verifica se a posição está vazia antes de chamar `setDigit`. Esta segunda função só altera células `Playable` (`Kakuro.elm:318`). Nos demais casos, o tabuleiro é preservado. `fillEmptyCells` aplica essa função às entradas de uma solução. Isso preserva os números digitados pelo jogador durante dica e resolução. A assinatura e o casamento de padrões explicitam as condições de atualização.
-
-O relato de implementação do PR #57 registra duas refatorações guiadas pelo compilador. Ao trocar `LoadFailed String` por `LoadFailed Api.Error`, o compilador apontou os locais de criação e exibição afetados. Ao renomear o tipo de pistas de `Clue` para `Sums`, listou os usos em `Kakuro`, `Api` e `View.Board`. A versão atual usa `LoadFailed Api.Error` e `Sums`, conforme `Main.elm:26` e `Kakuro.elm:59`. O relato original está em https://github.com/Pedrovargas10/kakuro-paradigmas/pull/57.
+[Explicação.]
 
 ## 7. Integração
 
@@ -287,4 +285,4 @@ A modelagem por restrições concentra as regras de somas e de dígitos distinto
 
 No Elm, os estados de carregamento, erro e partida aparecem como alternativas de um tipo, e as respostas HTTP exigem tratar `Ok` e `Err`. O encapsulamento de `Digit` e `Board` concentra validações na construção dos dados. Funções como `fillIfEmpty` deixam explícito que dica e resolução só preenchem casas vazias. O custo dessa organização é escrever conversões e decoders que preservem o contrato com a API.
 
-A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. Os exemplos de refatoração relatados pelo responsável pelo frontend estão registrados na seção 6.3. O grupo deve revisar esta análise e complementar com sua experiência de desenvolvimento.
+A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. O grupo deve revisar esta análise e complementar com sua experiência de desenvolvimento.
