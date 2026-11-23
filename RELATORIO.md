@@ -318,6 +318,8 @@ teclado, aparência ou recuperação de falhas no navegador; esses casos estão 
 a integração Python e a estrutura do frontend; o arquivo `x.pl` e os
 módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
 
+O arquivo `scripts/validar_entrega.py` foi copiado integralmente, sem alterações, do [repositório-modelo de Fábio Macêdo Mendes](https://github.com/fabiommendes/paradigmas-trabalho-final/blob/8454eea9bd08b9ef5e3b0538532d18a23174a93c/scripts/validar_entrega.py), no commit `8454eea9bd08b9ef5e3b0538532d18a23174a93c`, para a conferência dos documentos de entrega (issue #9).
+
 **Referências.** [Livros, documentação, tutoriais, repositórios consultados.]
 
 Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.swi-prolog.org/pldoc/man?section=janus-call-prolog),
