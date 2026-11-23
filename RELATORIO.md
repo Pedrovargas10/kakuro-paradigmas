@@ -1,36 +1,6 @@
-<!--
-  TEMPLATE DO RELATÓRIO DE ENTREGA: Paradigmas de Programação
-
-  Como usar:
-  - Copie este arquivo para a raiz do repositório do grupo, com o nome
-    RELATORIO.md, e preencha todas as seções.
-  - Os textos entre <!- - e - -> (como este) são instruções. Eles não
-    aparecem quando o arquivo é visualizado, mas APAGUE-OS antes de entregar.
-  - Troque tudo o que estiver entre [colchetes].
-  - Seja direto. Frases curtas e listas valem mais que parágrafos longos.
-    Um relatório típico cabe em 4 a 8 páginas.
-  - O relatório e o código são avaliados juntos. Sempre que possível,
-    aponte para o código (arquivo e linha) em vez de descrevê-lo. Os
-    critérios de avaliação estão em AVALIACAO.md.
-  - ANTES DE ENTREGAR, rode o validador na raiz do repositório:
-
-        uv run scripts/validar_entrega.py
-
-    Ele confere a FORMA do relatório (comentários apagados, colchetes
-    preenchidos, tabelas bem formadas, seções presentes, arquivos
-    existentes), não o conteúdo. Corrija todos os ERROS apontados.
--->
-
-# [Nome do projeto]
+# Kakuro — Prolog, Python e Elm
 
 ## 1. Identificação
-
-<!--
-  Os grupos têm de 3 a 7 pessoas (5, em média). A tabela abaixo tem 5
-  linhas: adicione ou remova linhas conforme o tamanho do seu grupo, aqui e
-  na seção 10. Os grupos podem misturar alunos das turmas das 14h e das 16h:
-  indique a turma de CADA integrante.
--->
 
 | Nome completo | Matrícula | Turma (14h/16h) | Usuário GitHub |
 |---------------|-----------|-----------------|----------------|
@@ -40,171 +10,155 @@
 | [Nome]        | [000000]  | [16h]           | [@usuario]     |
 | [Nome]        | [000000]  | [14h]           | [@usuario]     |
 
-- **Nome do projeto:** [o mesmo do título acima]
-- **Nome do grupo:** [um nome criativo, que não se repita na turma]
-  <!--
-    O nome do grupo identifica vocês nas planilhas de notas e na chamada
-    para a apresentação. Não dá para validar se é único, então caprichem:
-    "Grupo 3" vai colidir com o "Grupo 3" da outra turma.
-  -->
-- **Repositório:** [https://github.com/...]
-- **Commit ou tag entregue:** [`a1b2c3d` ou `v1.0`]
-  <!--
-    O avaliador vai olhar exatamente esta versão. Para criar uma tag:
-      git tag v1.0 && git push origin v1.0
-  -->
-- **Ponto de partida:** [template do Sudoku com ajustes | variante do Sudoku | outro jogo conhecido | remix original | jogo inventado]
-  <!--
-    Escolha UMA faixa. Ela define o ajuste de escopo da nota do grupo
-    (AVALIACAO.md, seção 1.5). O professor confirma a faixa na apresentação.
-  -->
-- **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
-  <!--
-    No final do semestre, cada grupo faz uma apresentação oral de 15
-    minutos. Slides são opcionais; se o grupo usar, coloque o arquivo no
-    repositório (de preferência em PDF) e indique o caminho aqui.
-  -->
+- **Nome do projeto:** Kakuro — Prolog, Python e Elm
+- **Nome do grupo:** Equipe kakuro
+  - **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
+- **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35` (base técnica desta revisão documental; atualizar para a versão final antes da entrega)
+  - **Ponto de partida:** outro jogo conhecido
+  - **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
+  ## 2. Resumo
 
-## 2. Resumo
+Kakuro é um quebra-cabeça de somas em uma grade 6×6. O jogador preenche as casas com dígitos de 1 a 9, sem repetição dentro de cada sequência, respeitando as pistas horizontais e verticais. O Prolog gera puzzles com solução única, verifica preenchimentos, encontra soluções e identifica dicas forçadas. A interface Elm permite jogar no navegador e usa uma API Python para consultar o motor lógico.
 
-<!--
-  De 3 a 5 linhas: o que o sistema faz, para quem, e qual problema o
-  Prolog resolve nele. Quem ler só esta seção deve entender o projeto.
--->
-
-[Resumo do projeto.]
-
-![Captura de tela do sistema](docs/captura.png)
-<!-- Uma ou duas capturas de tela da interface. Crie a pasta docs/ se precisar. -->
+Captura real da interface pendente de inclusão antes da entrega. A versão disponível neste ambiente não tem as dependências do frontend instaladas.
 
 ## 3. Como executar
 
-<!--
-  Teste estas instruções numa máquina "limpa" (ou peça a um colega de
-  outro grupo). Se o avaliador não conseguir rodar o sistema, o resto do
-  trabalho não pode ser verificado.
--->
+**Requisitos**
 
-**Requisitos** (com as versões que o grupo usou):
+- SWI-Prolog 9.2 ou superior no PATH.
+- Python 3.12 ou superior, uv, compilador C e cabeçalhos de desenvolvimento para compilar Janus.
+- Node.js 20 ou superior, npm e GNU Make. As versões exatas dos pacotes estão nos lockfiles.
 
-- SWI-Prolog [9.x]
-- Node.js [2x.x]
-- [uv / Python 3.x, se usar]
-
-**Instalação e execução:**
+**Instalação e execução**
 
 ```sh
-[comandos exatos, na ordem]
+git clone https://github.com/Pedrovargas10/kakuro-paradigmas.git
+cd kakuro-paradigmas
+make install
+make dev
 ```
 
-**Testes:**
+A interface abre em http://localhost:5173 e a API em http://127.0.0.1:8000/docs. O proxy Vite encaminha `/api` ao backend (`frontend/vite.config.js`). Para executar só a API, usar `make install-backend` e `make dev-backend`.
+
+**Testes**
 
 ```sh
-[comando para rodar os testes, se houver]
+make test
+cd frontend
+npm run build
+npx --no-install elm-format --validate src/ tests/
+cd ..
+make validar
 ```
 
-**Testado em:** [Linux / Windows / macOS, navegador]
+Com a API já iniciada em outro terminal:
+
+```sh
+make test-integration PARTIDAS=10
+```
+
+**Testado em** Linux. O ensaio registrado em `docs/ENTREGA_PYTHON.md` usou contêiner Debian trixie, Python 3.13.5, SWI-Prolog 9.2.9 e Node 24.22.3. Os resultados e as limitações dessa execução estão na seção 8. As dependências são instaladas por `uv sync --locked` e `npm ci`, conforme o Makefile.
 
 ## 4. Arquitetura
 
-<!--
-  Um diagrama simples (pode ser em texto) mostrando as partes do sistema e
-  como elas se comunicam. Diga em uma frase a responsabilidade de cada parte.
--->
-
-```
-[Elm] --HTTP/JSON--> [Python] --janus--> [Prolog]
+```text
+Navegador com Elm → HTTP/JSON → FastAPI em Python → Janus → SWI-Prolog
 ```
 
-| Parte  | Responsabilidade | Arquivos principais |
-|--------|------------------|---------------------|
-| Prolog | [...]            | [`backend/prolog/...`] |
-| Elm    | [...]            | [`frontend/src/...`]   |
-| Python | [só integração]  | [`backend/app/...`]    |
+| Parte | Responsabilidade | Arquivos principais |
+|---|---|---|
+| Prolog | Restrições, busca de soluções, unicidade, geração e dicas | `backend/prolog/kakuro.pl`, `backend/prolog/generator.pl` |
+| Elm | Domínio da interface, edição, seleção, feedback local e estado das requisições | `frontend/src/Kakuro.elm`, `frontend/src/Main.elm`, `frontend/src/Api.elm`, `frontend/src/View/` |
+| Python | Validação do contrato HTTP, conversões, consultas parametrizadas ao Prolog e respostas de erro | `backend/app/schemas.py`, `backend/app/prolog.py`, `backend/app/main.py` |
+
+As views recebem dados e mensagens. O módulo `Kakuro` concentra funções puras, `Api` trata a comunicação e `Main` coordena as mudanças de estado.
 
 ## 5. Parte em Prolog
 
 ### 5.1 Predicados principais
 
-<!--
-  Os predicados mais importantes, com o local no código. Use a notação
-  nome/aridade e indique entradas (+) e saídas (-), como na documentação
-  do SWI-Prolog.
--->
-
 | Predicado | Local | O que faz |
-|-----------|-------|-----------|
-| [`resolver(+Entrada, -Saida)`] | [`arquivo.pl:42`] | [...] |
-| [...] | [...] | [...] |
+|---|---|---|
+| `solve(+Puzzle, +Entradas, -Solucao)` | `backend/prolog/kakuro.pl:206` | Encontra uma solução respeitando as entradas |
+| `solution_count(+Puzzle, +Entradas, -N)` | `backend/prolog/kakuro.pl:199` | Conta até duas soluções para distinguir ausência, unicidade e ambiguidade |
+| `check(+Puzzle, +Entradas, -Estado)` | `backend/prolog/kakuro.pl:225` | Classifica o preenchimento em incomplete, inconsistent ou solved |
+| `hint(+Puzzle, +Entradas, -Resultado)` | `backend/prolog/kakuro.pl:239` | Procura uma casa vazia cujo valor não admite alternativa compatível |
+| `generate(-Puzzle)` e `generate(+Seed, -Puzzle)` | `backend/prolog/generator.pl:22` | Gera um puzzle único com limite de tempo e semente opcional |
 
 ### 5.2 Conceitos do paradigma lógico utilizados
 
-<!--
-  Marque o que o projeto usa DE FATO e indique onde. Não é preciso usar
-  tudo; é preciso explicar bem o que foi usado.
--->
-
-- [ ] Fatos e regras como base de conhecimento: [onde]
-- [ ] Unificação e casamento de padrões: [onde]
-- [ ] Recursão (inclusive sobre listas): [onde]
-- [ ] Backtracking e múltiplas soluções: [onde]
-- [ ] `findall/3`, `bagof/3`, `setof/3` ou similares: [onde]
-- [ ] Corte (`!`) ou negação (`\+`), e por que foram necessários: [onde]
-- [ ] Programação por restrições (CLP(FD) ou outra): [onde]
-- [ ] Predicados de ordem superior (`maplist`, `foldl`, `include`...): [onde]
-- [ ] Outro: [...]
+- Unificação e casamento de padrões distinguem bloqueios, casas brancas e pistas em `normalize_cell/2`, `backend/prolog/kakuro.pl:15`.
+- A recursão percorre linhas, posições e sequências em `dir_seqs/4` e `white_pos_/3`, nas linhas 60 e 111.
+- CLP(FD) define domínio dos dígitos, ausência de repetição e somas em `setup/4` e `post_constraints/2`, nas linhas 129 e 185.
+- `labeling/2` realiza a busca depois da montagem das restrições em `solve/3`, linha 206.
+- `findnsols/4`, limitado por `once/1`, interrompe a contagem após duas soluções, linha 199.
+- A negação em `first_forced/6`, linha 255, verifica a ausência de solução com valor alternativo antes de fornecer uma dica.
+- `maplist/2` e `maplist/3` aplicam restrições e conversões às listas. Cortes nas consultas de posição evitam alternativas depois de uma posição encontrada (`lookup/3`, linha 159).
 
 ### 5.3 Trecho em destaque
 
-<!--
-  Escolha o trecho de Prolog de que o grupo mais se orgulha (ou o mais
-  difícil). Cole o código e explique como ele funciona: o que é declarado,
-  como o Prolog chega à resposta, e por que essa solução é "lógica" e não
-  uma tradução de um algoritmo imperativo.
--->
+Trecho de `backend/prolog/kakuro.pl:185`:
 
 ```prolog
-[trecho]
+post_constraints([], _).
+post_constraints([seq(Clue, Cells)|Seqs], Map) :-
+    maplist(lookup_in(Map), Cells, Vars),
+    all_distinct(Vars),
+    sum(Vars, #=, Clue),
+    post_constraints(Seqs, Map).
 ```
 
-[Explicação.]
+Cada sequência reúne as variáveis das casas associadas à pista. `all_distinct/1` e `sum/3` declaram condições que devem valer simultaneamente. Os cruzamentos compartilham variáveis no mapa de posições. Assim, as restrições de uma direção também reduzem os valores possíveis na outra. A seleção dos valores restantes acontece posteriormente com `labeling/2`.
 
 ## 6. Parte em Elm
 
 ### 6.1 Modelo e mensagens
 
-<!--
-  Os tipos centrais do programa: o Model, o tipo Msg e os custom types do
-  domínio. Explique as escolhas: por que um custom type e não um Bool, por
-  que Maybe ou Result, etc.
--->
+Trechos de `frontend/src/Main.elm:24` e `frontend/src/Main.elm:63`:
 
 ```elm
-[type alias Model = ...]
-[type Msg = ...]
+type Model
+    = Loading
+    | LoadFailed Api.Error
+    | InGame Game
+
+type Phase
+    = Ready Stage
+    | Waiting Request Stage
 ```
 
-[Explicação das escolhas.]
+`Game` reúne `board`, `selection`, `phase` e `notice`. As mensagens incluem `PressDigit`, `Check`, `AskHint`, `Solve` e as respostas `GotPuzzle`, `GotCheck`, `GotHint` e `GotSolution`. As respostas HTTP usam `Result Api.Error`, permitindo tratar sucesso e falha por casamento de padrões.
+
+`Maybe Editable` representa uma seleção opcional. Os construtores de `Digit`, `Sums` e `Board` ficam encapsulados no módulo `Kakuro`. `digitFromInt` aceita apenas 1 a 9, `sums` exige uma pista positiva e `fromRows` verifica a grade 6×6 (`frontend/src/Kakuro.elm:36`, `:59` e `:135`).
 
 ### 6.2 Conceitos do paradigma funcional utilizados
 
-- [ ] Arquitetura Elm (Model, update, view): [onde]
-- [ ] Custom types e `case` exaustivo: [onde]
-- [ ] `Maybe` e `Result` no lugar de null e exceções: [onde]
-- [ ] Funções de ordem superior e aplicação parcial: [onde]
-- [ ] Composição (`|>`, `>>`): [onde]
-- [ ] Decoders e encoders JSON: [onde]
-- [ ] Comandos e subscriptions (efeitos controlados): [onde]
-- [ ] Imutabilidade e atualização de records: [onde]
-- [ ] Outro: [...]
+- A Arquitetura Elm reúne `init`, `update`, `subscriptions` e `view` em `frontend/src/Main.elm:14`.
+- Custom types e `case` distinguem carregamento, falha, partida e operação em andamento (`Main.elm:24`).
+- `Maybe` representa ausência de seleção e dígito. `Result` representa erros de construção do tabuleiro e respostas HTTP (`Kakuro.elm:135`, `Api.elm:124`).
+- `List.map`, `Array.map` e aplicação parcial transformam coleções sem mutação (`Kakuro.elm:150`).
+- Encoders e decoders centralizam o contrato JSON (`Api.elm:160` e `:219`).
+- `Cmd Msg` representa requisições, e `subscriptions` recebe eventos de teclado (`Main.elm:229` e `:324`).
+- A atualização de records cria novos estados. `edit`, `reset` e `receive` controlam quando uma alteração é aceita (`Main.elm:176`, `:186` e `:245`).
 
 ### 6.3 Trecho em destaque
 
+Trecho de `frontend/src/Kakuro.elm:304`:
+
 ```elm
-[trecho]
+fillIfEmpty : Entry -> Board -> Board
+fillIfEmpty entry board =
+    if digitAt entry.position board == Nothing then
+        setDigit entry.position (Just entry.digit) board
+
+    else
+        board
 ```
 
-[Explicação.]
+`fillIfEmpty` verifica se a posição está vazia antes de chamar `setDigit`. Esta segunda função só altera células `Playable` (`Kakuro.elm:318`). Nos demais casos, o tabuleiro é preservado. `fillEmptyCells` aplica essa função às entradas de uma solução. Isso preserva os números digitados pelo jogador durante dica e resolução. A assinatura e o casamento de padrões explicitam as condições de atualização.
+
+O histórico consultado não registra um episódio específico em que uma mensagem do compilador guiou uma refatoração. Esse relato precisa ser complementado pelo responsável pelo frontend antes da entrega.
 
 ## 7. Integração
 
@@ -228,13 +182,7 @@ O roteiro de Swagger e o teste HTTP estão em `docs/API_PYTHON.md`.
 
 ## 8. Testes e validação
 
-<!--
-  Como o grupo sabe que o sistema funciona? Testes automatizados (plunit,
-  pytest, elm-test), roteiros de teste manual, casos de borda verificados.
--->
-
-- [O que foi testado e como.]
-- [Casos de borda considerados.]
+A suíte pytest cobre as rotas HTTP, o contrato de tipos, as conversões Janus e os erros 422, 500 e 503. Os fixtures oficiais cobrem preenchimento parcial, solução conhecida, dica, conclusão e entradas incompatíveis. Os testes Prolog exercitam contagem, restrições, geração e dicas; os testes Elm cobrem domínio e codificação JSON.
 
 Na entrega Python das issues #6, #10, #15, #16, #23 e #24, a suíte
 `cd backend && uv run --locked pytest` passou 83 testes. Ela cobre contratos
@@ -267,30 +215,19 @@ Janus real. O verificador HTTP completou dez partidas, com geração média de
 3,374 s e máxima de 7,312 s. Na conferência do navegador houve HTTP 503 no
 quinto novo jogo. No ambiente limpo do PR #58, a instalação e a inicialização
 passaram e o plunit registrou 39/40, com falha em `generator:varias_geracoes`.
-O aceite do fluxo no navegador (#29) e o validador oficial (#9) seguem pendentes.
+O aceite do fluxo no navegador segue na #29. O validador oficial foi integrado no PR #63 e passou a executar a conferência documental; os apontamentos precisam ser resolvidos antes da entrega.
 
 ## 9. Limitações e problemas conhecidos
 
-<!--
-  Seja honesto. Um problema conhecido e bem descrito vale mais que um
-  problema escondido que o avaliador descobre sozinho.
--->
+- A geração pode atingir o limite de dez segundos e retornar HTTP 503. A conferência de navegador registrada na seção 8 apresentou essa falha no quinto novo jogo. O limite protege a requisição, mas exige oferecer uma nova tentativa ao jogador.
+- Os resultados históricos de testes e de instalação não comprovam a execução da versão final em qualquer máquina. Os comandos devem ser repetidos na referência escolhida para entrega.
+- O aceite de dez jogos consecutivos no navegador continua pendente na issue #29.
+- Identificação dos integrantes, responsáveis pela apresentação, material de slides e relato específico da experiência com o compilador Elm ainda exigem confirmação do grupo.
+- A captura real da interface deve ser adicionada antes da entrega.
 
-- [Limitação ou bug conhecido, e em que situação acontece.]
-- [O que o grupo faria com mais tempo.]
-
-Na integração Python, os comandos diretos com uv já permitem executar e testar
-o backend. O Makefile ainda depende da conclusão do PR #30; os fixtures
-compartilhados dependem da issue #14. Validações estruturais e ajustes de dicas
-do motor permanecem nas issues Prolog #12, #13 e #21. O teste HTTP não avalia
-teclado, aparência ou recuperação de falhas no navegador; esses casos estão na #29.
+Como continuidade técnica, a estabilidade e o número de tentativas do gerador podem ser medidos com sementes reproduzíveis e `attempts_average/2` (`backend/prolog/generator.pl:49`), preservando a checagem de unicidade.
 
 ## 10. Contribuição de cada integrante
-
-<!--
-  O que cada pessoa fez. Deve ser coerente com o histórico de commits do
-  repositório. Todos os integrantes precisam concordar com esta tabela.
--->
 
 | Integrante | Principais contribuições |
 |------------|--------------------------|
@@ -301,26 +238,13 @@ teclado, aparência ou recuperação de falhas no navegador; esses casos estão 
 | [Nome]     | [...] |
 | [Nome]     | [...] |
 
-<!--
-  Além desta tabela, que é do grupo, cada integrante entrega uma avaliação
-  360 graus individual no SEU repositório do GitHub Classroom, em
-  avaliacao-360/<matricula>.md. Veja o modelo em avaliacao-360/TEMPLATE.md.
--->
-
 ## 11. Fontes, código de terceiros e uso de IA
 
-<!--
-  Declare tudo o que não foi escrito pelo grupo. Declarar não tira pontos;
-  deixar de declarar pode anular o trabalho.
--->
-
-**Código reaproveitado.** [Ex.: "Partimos do template do Sudoku. Mantivemos
-a integração Python e a estrutura do frontend; o arquivo `x.pl` e os
-módulos `Y.elm` e `Z.elm` foram escritos pelo grupo."]
+**Código reaproveitado.** A origem do validador de entrega está registrada abaixo. O grupo ainda precisa confirmar se há outros trechos de terceiros a declarar.
 
 O arquivo `scripts/validar_entrega.py` foi copiado integralmente, sem alterações, do [repositório-modelo de Fábio Macêdo Mendes](https://github.com/fabiommendes/paradigmas-trabalho-final/blob/8454eea9bd08b9ef5e3b0538532d18a23174a93c/scripts/validar_entrega.py), no commit `8454eea9bd08b9ef5e3b0538532d18a23174a93c`, para a conferência dos documentos de entrega (issue #9).
 
-**Referências.** [Livros, documentação, tutoriais, repositórios consultados.]
+**Referências.** A documentação técnica consultada para a integração Python está listada abaixo. Os módulos Prolog usam `library(clpfd)`, e o frontend usa as bibliotecas Elm declaradas em `frontend/elm.json`.
 
 Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.swi-prolog.org/pldoc/man?section=janus-call-prolog),
 [FastAPI CLI](https://fastapi.tiangolo.com/fastapi-cli/) e
@@ -328,15 +252,8 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** [auxiliar]
-  <!--
-    nenhum: não usou. pontual: autocompletar, dúvidas, explicar erros.
-    auxiliar: trechos gerados pela IA e revisados pelo grupo. intensivo: a
-    IA escreveu a maior parte do código. Veja o efeito em AVALIACAO.md,
-    seção 1.5. Não declarar anula o trabalho; declarar não tira pontos.
-  -->
-
-| Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
+- **Faixa de uso no código:** auxiliar
+  | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
 | Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
 | Codex (OpenAI), Claude (Anthropic) e Antigravity (Caio — @CaioSoandrd) | Revisão dos PRs #35–#40, apoio em código/ajustes (Makefile, rotas solve/hint e verificação), ampliação do verificador HTTP (#50), suíte de fixtures (#55) e documentação de integração/entrega | Execução local de pytest com Janus real (83 baseline e 104 no PR #55; 82/83 em reteste por 503 do gerador), `make test-prolog` (39/40 pós-#49) e dez partidas HTTP; todas as alterações foram revisadas por Caio antes de cada envio. O ensaio posterior em contêiner limpo e os resultados do fluxo integrado estão na seção 8. |
@@ -344,54 +261,21 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 ## 12. Apresentação oral
 
-<!--
-  A apresentação tem 15 minutos e acontece no final do semestre. Uma
-  divisão que costuma funcionar: 2 min de contexto, 5 min de demonstração
-  do sistema funcionando, 6 min mostrando o código Prolog e Elm mais
-  interessante, 2 min de limitações e aprendizados. Todos os integrantes
-  devem falar.
-
-  Preencha esta seção antes da apresentação.
--->
-
 - **Slides:** [mesmo caminho indicado na seção 1, ou "não há"]
 - **Roteiro:**
 
 | Parte | Duração | Quem apresenta |
 |-------|:-------:|----------------|
-| [Contexto e objetivo] | [2 min] | [Nome] |
-| [Demonstração] | [5 min] | [Nome] |
-| [Código Prolog] | [3 min] | [Nome] |
-| [Código Elm] | [3 min] | [Nome] |
-| [Limitações e aprendizados] | [2 min] | [Nome] |
+| Contexto e objetivo | 2 min | [Responsável a confirmar] |
+| Demonstração | 5 min | [Responsável a confirmar] |
+| Código Prolog | 3 min | [Responsável a confirmar] |
+| Código Elm | 3 min | [Responsável a confirmar] |
+| Limitações e aprendizados | 2 min | [Responsável a confirmar] |
 
 ## 13. Reflexão sobre os paradigmas
 
-<!--
-  De 1 a 3 parágrafos. Perguntas que podem ajudar:
-  - O que ficou mais simples em Prolog do que seria numa linguagem
-    imperativa? E o que ficou mais difícil?
-  - O que o compilador do Elm impediu que desse errado?
-  - Como a forma de pensar mudou entre as duas linguagens?
--->
+A modelagem por restrições concentra as regras de somas e de dígitos distintos no Prolog. O mapa de posições compartilha variáveis entre sequências que se cruzam, permitindo propagação antes da enumeração. Para uma dica, encontrar uma solução candidata é insuficiente: a implementação também verifica se existe uma solução com valor diferente naquela posição. A ausência dessa alternativa fundamenta a revelação de um valor forçado.
 
-[Reflexão.]
+No Elm, os estados de carregamento, erro e partida aparecem como alternativas de um tipo, e as respostas HTTP exigem tratar `Ok` e `Err`. O encapsulamento de `Digit` e `Board` concentra validações na construção dos dados. Funções como `fillIfEmpty` deixam explícito que dica e resolução só preenchem casas vazias. O custo dessa organização é escrever conversões e decoders que preservem o contrato com a API.
 
----
-
-<!--
-  CHECKLIST ANTES DE ENTREGAR (apague esta seção depois de conferir)
-
-  - [ ] `uv run scripts/validar_entrega.py` termina sem erros.
-  - [ ] Todos os integrantes, com matrícula e turma, estão na seção 1.
-  - [ ] O commit ou tag da seção 1 existe no repositório e é a versão final.
-  - [ ] As instruções da seção 3 funcionam numa máquina sem nada instalado
-        além dos requisitos listados.
-  - [ ] Os locais indicados (arquivo:linha) conferem com o commit entregue.
-  - [ ] As seções 10 e 11 foram revisadas por todo o grupo.
-  - [ ] Se há slides, o arquivo está no repositório e o caminho da seção 1
-        está certo.
-  - [ ] Cada integrante entregou a própria avaliação 360 graus no seu
-        repositório individual, em avaliacao-360/<matricula>.md.
-  - [ ] Nenhum texto entre [colchetes] ou comentário de instrução sobrou.
--->
+A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. O grupo deve complementar esta análise com sua experiência de desenvolvimento e o exemplo de refatoração solicitado na seção 6.3.
