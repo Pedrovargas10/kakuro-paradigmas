@@ -12,11 +12,13 @@
 
 - **Nome do projeto:** Kakuro — Prolog, Python e Elm
 - **Nome do grupo:** Equipe kakuro
-  - **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
-- **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35` (base técnica desta revisão documental; atualizar para a versão final antes da entrega)
-  - **Ponto de partida:** outro jogo conhecido
-  - **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
-  ## 2. Resumo
+- **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
+- **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35`
+- **Ponto de partida:** outro jogo conhecido
+- **Slides da apresentação oral:** [`docs/apresentacao.pdf` | link externo | não há]
+A referência acima identifica a base técnica desta revisão documental. O grupo deve atualizá-la para a versão final antes da entrega.
+
+## 2. Resumo
 
 Kakuro é um quebra-cabeça de somas em uma grade 6×6. O jogador preenche as casas com dígitos de 1 a 9, sem repetição dentro de cada sequência, respeitando as pistas horizontais e verticais. O Prolog gera puzzles com solução única, verifica preenchimentos, encontra soluções e identifica dicas forçadas. A interface Elm permite jogar no navegador e usa uma API Python para consultar o motor lógico.
 
@@ -253,7 +255,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 **Uso de ferramentas de IA.**
 
 - **Faixa de uso no código:** auxiliar
-  | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
+| Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
 | Codex (OpenAI) | Utilizada apenas para tirar dúvidas sobre o funcionamento do jogo e para gerar alguns trechos do código que estavam causando bugs, tendo em vista que toda alteração era revisado por mim | Execução de pytest, prolog real e servidor HTTP. |
 | Codex (OpenAI), Claude (Anthropic) e Antigravity (Caio — @CaioSoandrd) | Revisão dos PRs #35–#40, apoio em código/ajustes (Makefile, rotas solve/hint e verificação), ampliação do verificador HTTP (#50), suíte de fixtures (#55) e documentação de integração/entrega | Execução local de pytest com Janus real (83 baseline e 104 no PR #55; 82/83 em reteste por 503 do gerador), `make test-prolog` (39/40 pós-#49) e dez partidas HTTP; todas as alterações foram revisadas por Caio antes de cada envio. O ensaio posterior em contêiner limpo e os resultados do fluxo integrado estão na seção 8. |
