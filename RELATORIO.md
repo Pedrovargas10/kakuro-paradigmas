@@ -308,3 +308,21 @@ A modelagem por restrições concentra as regras de somas e de dígitos distinto
 No Elm, os estados de carregamento, erro e partida aparecem como alternativas de um tipo, e as respostas HTTP exigem tratar `Ok` e `Err`. O encapsulamento de `Digit` e `Board` concentra validações na construção dos dados. Funções como `fillIfEmpty` deixam explícito que dica e resolução só preenchem casas vazias. O custo dessa organização é escrever conversões e decoders que preservem o contrato com a API.
 
 A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos. O grupo deve revisar esta análise e complementar com sua experiência de desenvolvimento.
+
+---
+
+### Checklist antes da entrega
+
+- [ ] Executar `make validar` e corrigir todos os erros apontados.
+- [ ] Conferir os nomes, matrículas, turmas e usuários GitHub dos sete integrantes na seção 1.
+- [ ] Atualizar o commit ou tag da seção 1 para a versão final que será enviada.
+- [ ] Repetir as instruções da seção 3 em uma máquina limpa.
+- [ ] Completar as seções 5 e 6 com os responsáveis por Prolog e Elm.
+- [ ] Conferir as referências de arquivos e linhas contra a versão final.
+- [ ] Cada integrante preencher e confirmar sua contribuição na seção 10.
+- [ ] Revisar as fontes, o código de terceiros e as declarações da seção 11 com todo o grupo.
+- [ ] Confirmar o roteiro da apresentação e os responsáveis da seção 12.
+- [ ] Conferir a indicação de slides nas seções 1 e 12 e incluir o arquivo ou link se forem utilizados.
+- [ ] Cada integrante enviar sua avaliação 360 na atividade individual do Codehood.
+- [ ] Conferir que todos os campos do modelo foram preenchidos e que os comentários de instrução foram removidos.
+- [ ] Enviar a versão final da main ao Codehood e conferir o commit e o horário registrados na página da entrega.
