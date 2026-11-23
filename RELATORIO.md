@@ -91,11 +91,11 @@ As views recebem dados e mensagens. O módulo `Kakuro` concentra funções puras
 ### 5.2 Conceitos do paradigma lógico utilizados
 
 - Unificação e casamento de padrões distinguem bloqueios, casas brancas e pistas em `normalize_cell/2`, `backend/prolog/kakuro.pl:15`.
-- A recursão percorre linhas, posições e sequências em `dir_seqs/4` e `white_pos_/3`, nas linhas 60 e 111.
+- A recursão percorre linhas, posições e sequências em `dir_seqs/4` e `white_pos_/3`, nas linhas 60 e 110.
 - CLP(FD) define domínio dos dígitos, ausência de repetição e somas em `setup/4` e `post_constraints/2`, nas linhas 129 e 185.
 - `labeling/2` realiza a busca depois da montagem das restrições em `solve/3`, linha 206.
 - `findnsols/4`, limitado por `once/1`, interrompe a contagem após duas soluções, linha 199.
-- A negação em `first_forced/6`, linha 255, verifica a ausência de solução com valor alternativo antes de fornecer uma dica.
+- A negação em `first_forced/5`, linha 255, verifica a ausência de solução com valor alternativo antes de fornecer uma dica.
 - `maplist/2` e `maplist/3` aplicam restrições e conversões às listas. Cortes nas consultas de posição evitam alternativas depois de uma posição encontrada (`lookup/3`, linha 159).
 
 ### 5.3 Trecho em destaque
@@ -117,7 +117,7 @@ Cada sequência reúne as variáveis das casas associadas à pista. `all_distinc
 
 ### 6.1 Modelo e mensagens
 
-Trechos de `frontend/src/Main.elm:24` e `frontend/src/Main.elm:63`:
+Trechos de `frontend/src/Main.elm:24` e `frontend/src/Main.elm:38`:
 
 ```elm
 type Model
@@ -132,7 +132,7 @@ type Phase
 
 `Game` reúne `board`, `selection`, `phase` e `notice`. As mensagens incluem `PressDigit`, `Check`, `AskHint`, `Solve` e as respostas `GotPuzzle`, `GotCheck`, `GotHint` e `GotSolution`. As respostas HTTP usam `Result Api.Error`, permitindo tratar sucesso e falha por casamento de padrões.
 
-`Maybe Editable` representa uma seleção opcional. Os construtores de `Digit`, `Sums` e `Board` ficam encapsulados no módulo `Kakuro`. `digitFromInt` aceita apenas 1 a 9, `sums` exige uma pista positiva e `fromRows` verifica a grade 6×6 (`frontend/src/Kakuro.elm:36`, `:59` e `:135`).
+`Maybe Editable` representa uma seleção opcional. Os construtores de `Digit`, `Sums` e `Board` ficam encapsulados no módulo `Kakuro`. `digitFromInt` aceita apenas 1 a 9, `sums` exige uma pista positiva e `fromRows` verifica a grade 6×6 (`frontend/src/Kakuro.elm:40`, `:65` e `:135`).
 
 ### 6.2 Conceitos do paradigma funcional utilizados
 
