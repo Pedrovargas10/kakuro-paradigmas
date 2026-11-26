@@ -17,7 +17,7 @@
 - **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
 - **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35`
 - **Ponto de partida:** outro jogo conhecido
-- **Slides da apresentação oral:** não há
+- **Slides da apresentação oral:** [Apresentação no Google Slides](https://docs.google.com/presentation/d/1AdrMWySFHswIIYkz_onJeeLnjzmVzED9iBNA_wWmK3s/edit?usp=sharing)
 A referência acima identifica a base técnica desta revisão documental. O grupo deve atualizá-la para a versão final antes da entrega.
 
 ## 2. Resumo
@@ -379,8 +379,9 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 ## 12. Apresentação oral
 
-- **Slides:** não há
-O roteiro abaixo é uma proposta de distribuição dos 15 minutos, baseada nas contribuições registradas. O grupo deve confirmar os responsáveis antes da apresentação. Os slides estão indicados como inexistentes porque nenhum arquivo foi encontrado no repositório consultado.
+- **Slides:** [Apresentação no Google Slides](https://docs.google.com/presentation/d/1AdrMWySFHswIIYkz_onJeeLnjzmVzED9iBNA_wWmK3s/edit?usp=sharing)
+
+O roteiro abaixo é uma proposta de distribuição dos 15 minutos, baseada nas contribuições registradas. O grupo deve confirmar os responsáveis antes da apresentação.
 
 - **Roteiro proposto:**
 
