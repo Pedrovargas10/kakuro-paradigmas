@@ -137,7 +137,7 @@ Em vez de implementar um algoritmo passo a passo (com laços testando números e
 
 ### 6.1 Modelo e mensagens
 
-O estado da aplicação fica em `frontend/src/Main.elm:24-77`. Os tipos centrais são:
+O estado da aplicação fica em `frontend/src/Main.elm` (linhas 24-77). Os tipos centrais são:
 
 ```elm
 type Model
@@ -196,51 +196,36 @@ Os tipos do domínio ficam em `frontend/src/Kakuro.elm`: `Digit`, `Sums`, `Cell`
 
 - **Fases do programa como tipo.** `Model` separa três situações: carregando o primeiro puzzle (`Loading`), falha ao carregá-lo (`LoadFailed`) e partida em andamento (`InGame`). Assim a tela de jogo nunca existe sem tabuleiro. Não há um `board : Maybe Board` espalhado pelo código.
 - **`Phase` impede requisições simultâneas.** `Ready Stage` significa que o jogo aguarda o jogador. `Waiting Request Stage` significa que há uma chamada à API em andamento e guarda qual é e em que estágio o jogo estava (`Playing` ou `Finished`). Enquanto está em `Waiting`, os botões ficam desabilitados e os cliques repetidos são ignorados. Depois que a resposta chega, o jogo volta ao estágio em que estava.
-- **`Notice` guarda o que a tela deve mostrar.** O texto exibido é calculado na `view` a partir de `Notice`, em vez de ser guardado como `String` no modelo. Mudar a mensagem ou o idioma mexe só nas funções de texto da `view` (`waitingText`, `noticeStatus`, `checkStatus`, `hintStatus` e `failureStatus`).
+- **`Notice` guarda o que a tela deve mostrar.** O texto exibido é calculado na `view` a partir de `Notice`, em vez de ser guardado como `String` no modelo. Mudar a mensagem ou o idioma mexe só em `noticeStatus`.
 - **Uma mensagem para cada ação e uma para cada resposta.** Toda chamada ao backend tem uma mensagem de ida (`Check`, `AskHint`, `Solve`, `NewGame`) e uma de volta (`GotCheck`, `GotHint`, `GotSolution`, `GotPuzzle`). A resposta chega como `Result Api.Error a`, então sucesso e falha são tratados no `update`.
 - **Tipos opacos no domínio.** `Digit` só pode ser criado por `digitFromInt` (aceita de 1 a 9). `Editable` só pode ser criado por `editableAt` ou `firstEditable`, que garantem que a casa selecionada é jogável. `Board` só pode ser criado por `fromRows`, que valida o formato 6×6. Estados inválidos (dígito 0 ou 12, seleção em casa de pista, tabuleiro 5×7) não podem ser construídos fora do módulo `Kakuro`.
-- **O front-end não conhece a solução.** O tabuleiro só guarda os dígitos que o jogador digitou. Verificar, pedir dica e resolver passam sempre pelo backend em Prolog. O Elm só valida o que consegue sem a solução: dígitos repetidos, somas que já passaram da pista e sequências completas com soma diferente da pista (`conflicts`, `frontend/src/Kakuro.elm:382`).
+- **O front-end não conhece a solução.** O tabuleiro só guarda os dígitos que o jogador digitou. Verificar, pedir dica e resolver passam sempre pelo backend em Prolog. O Elm só valida o que consegue sem a solução: repetições e somas já estouradas (`conflicts`).
 
 ### 6.2 Conceitos do paradigma funcional utilizados
 
-- [x] Arquitetura Elm (Model, update, view): `Browser.element` (`frontend/src/Main.elm:14-21`) liga `init`, `update`, `subscriptions` e `view`. O `update` (`frontend/src/Main.elm:89-96`) só escolhe o caminho: `updateGame` quando o modelo é `InGame` e `updateLoading` nos outros casos. A `view` (`frontend/src/Main.elm:388-393`) é uma função pura do modelo para HTML. A tela nunca é alterada diretamente.
-- [x] Custom types e `case` exaustivo: `Model`, `Phase`, `Request`, `Notice` e `Msg` (`frontend/src/Main.elm:24-77`). `Sums` (`AcrossOnly | DownOnly | AcrossAndDown`) e `Cell` (`Block | Clue | Playable`) (`frontend/src/Kakuro.elm:59`, `120`). `Api.Error`, `CheckState` e `HintResult` (`frontend/src/Api.elm:25-44`). Funções como `describeError` e `isTransient` (`frontend/src/Api.elm:47-88`), `waitingText`, `checkStatus` e `hintStatus` (`frontend/src/Main.elm:470`, `505`, `518`) listam todos os casos. Se alguém adicionar uma variante nova, o compilador aponta cada `case` que precisa ser atualizado.
-- [x] `Maybe` e `Result` no lugar de null e exceções:
-  - `Kakuro.digitFromInt : Int -> Maybe Digit` e `Kakuro.sums : Maybe Int -> Maybe Int -> Maybe Sums` (`frontend/src/Kakuro.elm:40`, `65`).
-  - `cellAt` devolve `Maybe Cell` para posições fora da grade (`frontend/src/Kakuro.elm:162`).
-  - `fromRows : List (List Cell) -> Result String Board` rejeita um tabuleiro malformado com uma mensagem (`frontend/src/Kakuro.elm:135`).
-  - Todas as chamadas HTTP devolvem `Result Api.Error a` (`readResponse`, `frontend/src/Api.elm:124`).
-  - `Maybe Editable` em `selection` representa "nenhuma casa selecionada".
-  - `encodeSum` e `sumsDecoder` convertem `Maybe Int` em `null` do JSON e vice-versa (`frontend/src/Api.elm:196`, `269`).
-- [x] Funções de ordem superior e aplicação parcial:
-  - `List.foldl fillIfEmpty board solution` em `fillEmptyCells` (`frontend/src/Kakuro.elm:315`).
-  - `List.foldl (\position -> setDigit position Nothing) board ...` em `reset` (`frontend/src/Kakuro.elm:301`).
-  - `place` e `clear` recebem só parte dos argumentos e devolvem uma função `Board -> Board` (`frontend/src/Kakuro.elm:289`, `294`). É por isso que `edit (\cell -> Kakuro.place cell digit) game` e `edit Kakuro.clear game` funcionam com a mesma função `edit` (`frontend/src/Main.elm:122`, `125`).
-  - `Maybe.map (Entry position)` aplica parcialmente o construtor do record `Entry` (`frontend/src/Kakuro.elm:285`).
-  - `Decode.map2 Kakuro.sums`, `Decode.map3 toEntry` (`frontend/src/Api.elm:271`, `279`) e `Decode.map4 keyPress` (`frontend/src/Main.elm:336`).
-  - `List.filterMap`, `List.concatMap` e `List.indexedMap` nos cálculos do tabuleiro.
-- [x] Composição (`|>`, `>>`):
-  - Pipelines em `keyToMsg`: `String.toInt key |> Maybe.andThen Kakuro.digitFromInt |> Maybe.map PressDigit` (`frontend/src/Main.elm:383-385`).
-  - Composição com `>>` em `Result.mapError (Decode.errorToString >> UnexpectedResponse)` (`frontend/src/Api.elm:129`), `Tuple.second >> isPlayable` (`frontend/src/Kakuro.elm:191`), `.digit >> digitToInt` (`frontend/src/Kakuro.elm:396`) e `Kakuro.fromRows >> fromResult` (`frontend/src/Api.elm:244`).
-- [x] Decoders e encoders JSON:
-  - `encodeGame`, `encodePuzzle`, `encodeCell`, `encodeEntry` e `encodeSum` montam o JSON enviado ao backend, seguindo o contrato (`kind`, `across`, `down`, `row`, `col`, `value`) (`frontend/src/Api.elm:160-216`).
-  - `boardDecoder`, `cellDecoder`, `sumsDecoder`, `entryDecoder`, `checkDecoder`, `hintDecoder` e `solveDecoder` leem as respostas (`frontend/src/Api.elm:219-324`).
-  - `Decode.andThen` encadeia um campo discriminador (`kind`, `state`) com a escolha do decoder seguinte. `fromResult` e `fromMaybe` (`frontend/src/Api.elm:327-344`) transformam `Result` e `Maybe` em decoders que falham com mensagem clara. Assim uma resposta fora do contrato vira `UnexpectedResponse` em vez de quebrar o programa.
-- [x] Comandos e subscriptions (efeitos controlados):
-  - `Api.generate`, `Api.check`, `Api.hint` e `Api.solve` devolvem `Cmd msg`. Todas passam por `post`, que usa `Http.request` com `timeout` de 30 s (`frontend/src/Api.elm:111`).
-  - `init` já dispara `Api.generate GotPuzzle` (`frontend/src/Main.elm:17`).
-  - `subscriptions` usa `Browser.Events.onKeyDown` só quando o modelo é `InGame`, para o jogador usar teclado (setas, dígitos de 1 a 9, Backspace e Delete). Em `Loading` ou `LoadFailed` não há subscription (`Sub.none`) (`frontend/src/Main.elm:324`).
-  - `readResponse` e `errorFromStatus` traduzem a resposta HTTP para `Api.Error`: 422 vira `Rejected`, 503 vira `Unavailable`, outros erros com `detail` viram `ServerFailure`, timeout vira `TimedOut` e falha de rede vira `Unreachable` (`frontend/src/Api.elm:124`, `144`).
-- [x] Imutabilidade e atualização de records: toda mudança de estado cria um valor novo, como em `{ game | selection = Just cell }`, `{ game | board = change cell game.board, notice = Quiet }` e `{ game | phase = Ready Finished, notice = notice }` (`frontend/src/Main.elm:165`, `180`, `316`). O tabuleiro usa `Array` e `updateAt` para trocar uma casa sem alterar o tabuleiro anterior (`frontend/src/Kakuro.elm:332`).
-- [x] Outro:
-  - Recursão em `nextPlayable` e `playableRun`, que percorrem o tabuleiro numa direção até achar uma casa jogável ou o fim da grade (`frontend/src/Kakuro.elm:254`, `368`).
-  - Casamento de padrão em tuplas, como `case ( status, Decode.decodeString ... )` em `errorFromStatus` (`frontend/src/Api.elm:146`) e `( game.phase, game.selection )` em `edit` (`frontend/src/Main.elm:178`).
-  - `Set Position` em `conflicts`, que remove posições repetidas (`frontend/src/Kakuro.elm:382`).
-  - Separação entre módulos de lógica (`Kakuro`), comunicação (`Api`) e apresentação (`View.Board`, `View.Controls`).
+- [x] Arquitetura Elm (Model, update, view): `Main.elm` (`Browser.element`, `update`, `view`)
+- [x] Custom types e case exaustivo: `Model`, `Phase`, `Request`, `Notice`, `Msg` (`Main.elm`); `Cell`, `Sums` (`Kakuro.elm`); `Api.Error`, `HintResult` (`Api.elm`)
+- [x] Maybe e Result no lugar de null e exceções: `digitFromInt`, `sums`, `cellAt` (`Kakuro.elm`); `fromRows : ... -> Result String Board`; respostas HTTP como `Result Api.Error a`
+- [x] Funções de ordem superior e aplicação parcial: `List.foldl fillIfEmpty` (`fillEmptyCells`), `place` e `clear` usados em `edit`, `Maybe.map (Entry position)`
+- [x] Composição (`|>`, `>>`): `keyToMsg` (`Main.elm`); `Decode.errorToString >> UnexpectedResponse` e `Kakuro.fromRows >> fromResult` (`Api.elm`)
+- [x] Decoders e encoders JSON: `Api.elm` (`encodeGame`, `boardDecoder`, `checkDecoder`, `hintDecoder`, `solveDecoder`)
+- [x] Comandos e subscriptions (efeitos controlados): `Api.generate/check/hint/solve` (`Cmd`, `Http.request`); `Browser.Events.onKeyDown` em `subscriptions`
+- [x] Imutabilidade e atualização de records: `{ game | board = ... }` (`Main.elm`), `Array.set` em `updateAt` (`Kakuro.elm`)
+- [x] Outro: tipos opacos (`Digit`, `Editable`, `Board`) que impedem estados inválidos; recursão em `nextPlayable` e `playableRun`
+
+Exemplo (opcional), `Main.elm`, `keyToMsg`: converte a tecla em mensagem sem nenhum `if` nem `null`.
+
+```elm
+String.toInt key
+    |> Maybe.andThen Kakuro.digitFromInt
+    |> Maybe.map PressDigit
+```
+
+Se a tecla não é número, ou o número não está entre 1 e 9, o resultado é `Nothing` e nada acontece.
 
 ### 6.3 Trecho em destaque
 
-Trecho de `frontend/src/Main.elm:205-256`: a máquina de estados que controla as requisições.
+Trecho de `frontend/src/Main.elm`, linhas 205-256: a máquina de estados que controla as requisições.
 
 ```elm
 canStart : Request -> Phase -> Bool
@@ -304,7 +289,7 @@ receive expected apply game =
 3. Quando a resposta chega, `receive` confere se a mensagem corresponde ao pedido que estava pendente (`pending == expected`). Se corresponder, volta a fase para `Ready stage` e aplica o resultado com a função `apply` (`applyCheck`, `applyHint`, `applySolution` ou `applyPuzzle`). Se não, ignora a resposta.
 4. `controlsFor` usa a mesma `canStart` para habilitar ou desabilitar os botões. Por isso a regra que a interface mostra e a regra que o `update` aplica são sempre a mesma.
 
-Nos testes manuais, clicar várias vezes em "Verificar" ou apertar "Dica" durante outra requisição não gerava chamadas duplicadas nem respostas misturadas. Isso acontece sem flags booleanas nem contadores, só porque `Phase` é um tipo cujo estado inválido não consegue ser construído.
+Isso evita chamadas duplicadas e respostas misturadas sem flags booleanas nem contadores, porque `Phase` é um tipo em que o estado inválido não consegue ser construído.
 
 ## 7. Integração
 
