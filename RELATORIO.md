@@ -413,4 +413,4 @@ A integração aproxima duas formas de modelagem: restrições e busca no motor 
 - [x] Executar `make validar` na revisão final e conferir todos os apontamentos.
 - [ ] Confirmar o roteiro e os responsáveis pela apresentação com o grupo.
 - [ ] Cada integrante enviar sua avaliação 360 na atividade individual do Codehood.
-- [ ] Enviar a main ao Codehood e conferir o hash e o horário registrados.
+- [x] Enviar a main ao Codehood e conferir o hash e o horário registrados.
