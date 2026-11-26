@@ -15,7 +15,9 @@
 - **Nome do projeto:** Kakuro — Prolog, Python e Elm
 - **Nome do grupo:** Equipe kakuro
 - **Repositório:** https://github.com/Pedrovargas10/kakuro-paradigmas
-- **Commit ou tag entregue:** `f98d0a418c4b77ecb5f0583a892931330bcedf35`
+- **Commit ou tag entregue:** `HEAD`
+
+A entrega corresponde ao último commit da branch `main` no Codehood, conforme as regras atualizadas da disciplina. `HEAD` identifica esse commit ao abrir a versão entregue; o hash e o horário do envio ficam registrados no Codehood.
 - **Ponto de partida:** outro jogo conhecido
 - **Slides da apresentação oral:** [Apresentação no Google Slides](https://docs.google.com/presentation/d/1AdrMWySFHswIIYkz_onJeeLnjzmVzED9iBNA_wWmK3s/edit?usp=sharing)
 
@@ -348,7 +350,7 @@ O relatório é conferido pelo validador oficial do professor. Ele identifica ca
 | Caio Soares de Andrade | Modelos compartilhados, ponte e rotas solve/hint (#33/#34), Makefile e alvos do backend (#30/#51), guarda do validador (#46), README/.gitignore (#52), ampliação do verificador HTTP (#50), suíte solve/hint com fixtures (#55), revisão assistida dos PRs Python de Pedro e documentação de integração (#42). Evidências: PRs #30, #33, #34, #42, #46, #50, #51, #52 e #55. |
 | Davi dos Santos Brito Nobre | Implementação inicial do motor lógico em `backend/prolog/kakuro.pl` (normalização, extração de sequências, restrições CLP(FD), `solution_count/3`, `solve/3`, `check/3`, `hint/3`), criação da suíte inicial de testes `plunit` em `backend/prolog/test_kakuro.pl`, criação dos puzzles de referência em `docs/fixtures/` (JSON e Prolog) e correções do PR #49 (cobertura das entradas em `check/3` e `hint/3`, busca limitada com `findnsols/4` e busca de alternativa em `hint/3`). |
 | Lucas Machado Peres Ricarte | Implementação do gerador de puzzles em `backend/prolog/generator.pl` (`generate/1`, `generate/2` com semente, `generate_with_solution/2`, máscaras com CLP(FD), cálculo das pistas e checagem de solução única com `solution_count/3`), contagem de tentativas com `attempts_average/2` e criação dos testes `plunit` do gerador em `backend/prolog/test_kakuro.pl`. Evidências: PRs #43 e #48. |
-| Samuel Rodrigues Viana Lobo | Infraestrutura do frontend em Elm (issue #7): criação do projeto em `frontend/` com Vite e `vite-plugin-elm`, incluindo `package.json` com os scripts `dev`, `build` e `preview`, `vite.config.js`, `index.html`, `src/main.js` e um `src/Main.elm` mínimo com `Browser.element`, além do `elm.json` gerado com as dependências `elm/http` e `elm/json`. Configuração do proxy do Vite para encaminhar `/api` ao backend FastAPI (ajustado para `127.0.0.1` após sugestão de revisão, evitando problemas de resolução IPv6), verificação de formatação com `elm-format`, abertura do PR com `Closes #7` e resolução do conflito de merge no `.gitignore` com a `main`. Também contribuiu na estruturação do plano de execução e na criação e organização das issues no GitHub (etiquetas, milestones por fase e divisão das tarefas entre as áreas Prolog, Python e Elm) e na montagem do quadro do projeto para acompanhamento. Evidências: issue #7 e PR #N. |
+| Samuel Rodrigues Viana Lobo | Infraestrutura do frontend em Elm (issue #7): criação do projeto em `frontend/` com Vite e `vite-plugin-elm`, incluindo `package.json` com os scripts `dev`, `build` e `preview`, `vite.config.js`, `index.html`, `src/main.js` e um `src/Main.elm` mínimo com `Browser.element`, além do `elm.json` gerado com as dependências `elm/http` e `elm/json`. Configuração do proxy do Vite para encaminhar `/api` ao backend FastAPI (ajustado para `127.0.0.1` após sugestão de revisão, evitando problemas de resolução IPv6), verificação de formatação com `elm-format`, abertura do PR com `Closes #7` e resolução do conflito de merge no `.gitignore` com a `main`. Também contribuiu na estruturação do plano de execução e na criação e organização das issues no GitHub (etiquetas, milestones por fase e divisão das tarefas entre as áreas Prolog, Python e Elm) e na montagem do quadro do projeto para acompanhamento. Evidências: issue #7 e PR #54. |
 | Caio Rocha de Oliveira | Validações estruturais do puzzle e das entradas em `backend/prolog/kakuro.pl`, otimização de `hint/3`, unificação da extração de sequências horizontais e verticais, adição de testes `plunit` em `backend/prolog/test_kakuro.pl`. |
 | Vitor Feijó Leonardo | Fiquei responsável pela interface em Elm. Parti da estrutura que o Samuel montou e fui construindo o frontend em camadas: primeiro o domínio do tabuleiro (`Kakuro.elm`), depois a comunicação com a API (`Api.elm`), as telas (`View/`) e, por último, o estado do jogo (`Main.elm`). Usei o Claude Code como apoio para escrever e refatorar esse código: eu definia o que cada parte precisava fazer, lia e revisava o resultado e testava no navegador contra o backend real até o comportamento bater com o contrato do grupo. Também adicionei os testes Elm (`frontend/tests/`) e integrei os PRs #54 e #57. Evidências: issues #17 a #28 e PRs #54 e #57. |
 
@@ -366,7 +368,7 @@ Para a entrega Python: [Janus: chamadas Prolog a partir de Python](https://www.s
 
 **Uso de ferramentas de IA.**
 
-- **Faixa de uso no código:** auxiliar
+- **Faixa de uso no código:** intensivo
 
 | Ferramenta | Para que foi usada | Como o grupo verificou o resultado |
 |------------|--------------------|------------------------------------|
@@ -397,3 +399,18 @@ A modelagem por restrições concentra as regras de somas e de dígitos distinto
 No Elm, a maior mudança foi pensar primeiro nos estados possíveis e só depois nas telas. Em vez de vários `Bool` (carregando, erro, bloqueado), o jogo tem um `Model` com `Loading`, `LoadFailed` e `InGame`, e dentro da partida uma `Phase` que diz se estamos prontos ou esperando uma resposta (`frontend/src/Main.elm:24-61`). Como cada estado só carrega os dados que fazem sentido nele, não existe tabuleiro antes do primeiro puzzle nem edição durante uma requisição. O compilador ajudou de verdade nas mudanças: quando trocamos `LoadFailed String` por `LoadFailed Api.Error`, ele apontou exatamente as duas linhas afetadas, e ao renomear o tipo da pista de `Clue` para `Sums` listou cada uso até não sobrar nenhum. O custo é escrever decoders e encoders à mão para manter o contrato com a API, mas em troca nenhum dado inválido entra no programa sem passar por eles.
 
 A integração aproxima duas formas de modelagem: restrições e busca no motor lógico, e transformação imutável de estados na interface. O Python traduz formatos e erros na fronteira entre elas. Os testes com os mesmos fixtures ajudam a detectar divergências de coordenadas, estados e soluções entre os módulos.
+
+
+---
+
+### Checklist antes da entrega
+
+- [x] Preencher as 13 seções do relatório e as contribuições individuais.
+- [x] Conferir identificação, matrículas, turmas e consistência dos nomes nas tabelas.
+- [x] Incluir a captura da interface e o link dos slides nas seções 1 e 12.
+- [x] Registrar a faixa de uso de IA como intensivo, conforme confirmação do grupo.
+- [x] Conferir os resultados de testes, build e formatação na versão de código entregue.
+- [x] Executar `make validar` na revisão final e conferir todos os apontamentos.
+- [ ] Confirmar o roteiro e os responsáveis pela apresentação com o grupo.
+- [ ] Cada integrante enviar sua avaliação 360 na atividade individual do Codehood.
+- [ ] Enviar a main ao Codehood e conferir o hash e o horário registrados.
